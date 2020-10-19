@@ -24,15 +24,18 @@ public:
     bool loadPlugin(const juce::String& path);
     juce::AudioProcessorEditor* getPluginEditor();
 
-    bool checkPluginLoaded();
+    bool checkPluginLoaded() const;
+
+    void addMidiEvent(const juce::MidiMessage &midiMessage);
 
 private:
     //juce::AudioPluginInstance* plugin;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
     double sampleRate;
     int bufferSize;
-
     bool isPluginLoaded;
+
+    juce::MidiBuffer midiBuffer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioComponent)
 };

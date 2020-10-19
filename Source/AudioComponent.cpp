@@ -14,6 +14,7 @@
 
 //==============================================================================
 AudioComponent::AudioComponent() :
+plugin(nullptr),
 sampleRate(44100.f),
 bufferSize(256),
 isPluginLoaded(false)
@@ -29,7 +30,9 @@ isPluginLoaded(false)
     else
     {
         // Specify the number of input and output channels that we want to open
-        setAudioChannels (2, 2);
+        //setAudioChannels (2, 2);
+        setAudioChannels (0, 2);
+        std::cout << "Channels have been set" << std::endl;
     }
 }
 
@@ -48,6 +51,13 @@ void AudioComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRa
     // but be careful - it will be called on the audio thread, not the GUI thread.
 
     // For more details, see the help for AudioProcessor::prepareToPlay()
+    if (plugin)
+    {
+        plugin->prepareToPlay(sampleRate, samplesPerBlockExpected);
+        std::cout << "plugin sample rate: " << plugin->getSampleRate() << std::endl;
+        std::cout << "plugin num input channels: " << plugin->getTotalNumInputChannels() << std::endl;
+        std::cout << "plugin num output channels: " << plugin->getTotalNumOutputChannels() << std::endl;
+    }
 }
 
 void AudioComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
@@ -58,7 +68,20 @@ void AudioComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& buff
 
     // Right now we are not producing any data, in which case we need to clear the buffer
     // (to prevent the output of random noise)
-    bufferToFill.clearActiveBufferRegion();
+
+
+    if (plugin)
+    {
+        plugin->processBlock(*(bufferToFill.buffer), midiBuffer);
+        //auto rp = bufferToFill.buffer->getReadPointer(1);
+        //std::cout << rp[0] << std::endl;
+    }
+    else
+    {
+        bufferToFill.clearActiveBufferRegion();
+    }
+//    bufferToFill.clearActiveBufferRegion();
+
 }
 
 void AudioComponent::releaseResources()
@@ -72,6 +95,7 @@ void AudioComponent::releaseResources()
 }
 
 
+/// Additional methods
 // https://github.com/fedden/RenderMan/blob/master/Source/RenderEngine.cpp
 bool AudioComponent::loadPlugin(const juce::String& path)
 {
@@ -107,7 +131,7 @@ bool AudioComponent::loadPlugin(const juce::String& path)
     {
         // Success so set up plugin, then set up features and get all available
         // parameters from this given plugin.
-        plugin->prepareToPlay (sampleRate, bufferSize);
+        //plugin->prepareToPlay (sampleRate, bufferSize);
         //plugin->setNonRealtime (true);
 
         //mfcc.setup (512, 42, 13, 20, int (sampleRate / 2), sampleRate);
@@ -136,8 +160,16 @@ juce::AudioProcessorEditor* AudioComponent::getPluginEditor()
     return editor;
 }
 
-bool AudioComponent::checkPluginLoaded()
+bool AudioComponent::checkPluginLoaded() const
 {
     return isPluginLoaded;
 }
 
+
+void AudioComponent::addMidiEvent(const juce::MidiMessage &midiMessage)
+{
+    // NOTE: I hard coded sampleNumber 0 here
+    //midiBuffer.addEvent(midiMessage, midiMessage.getTimeStamp());
+    midiBuffer.addEvent(midiMessage, 0);
+    //std::cout << "num events: " << midiBuffer.getNumEvents() << std::endl;
+}

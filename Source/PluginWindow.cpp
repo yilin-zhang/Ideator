@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    PluginWIndow.cpp
+    PluginWindow.cpp
     Created: 13 Oct 2020 2:54:49pm
     Author:  Yilin Zhang
 

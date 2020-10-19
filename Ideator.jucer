@@ -4,6 +4,9 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="khuyTv" name="Ideator">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
+      <FILE id="blYncW" name="ConfigWindow.cpp" compile="1" resource="0"
+            file="Source/ConfigWindow.cpp"/>
+      <FILE id="AfbHKG" name="ConfigWindow.h" compile="0" resource="0" file="Source/ConfigWindow.h"/>
       <FILE id="S0Yi3i" name="PluginWindow.cpp" compile="1" resource="0"
             file="Source/PluginWindow.cpp"/>
       <FILE id="dPaYe8" name="PluginWindow.h" compile="0" resource="0" file="Source/PluginWindow.h"/>

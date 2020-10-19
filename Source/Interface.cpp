@@ -11,22 +11,29 @@
 #include "Interface.h"
 
 Interface::Interface(AudioComponent& audioComponent) :
-audioComponent(audioComponent)
+audioComponent(audioComponent),
+midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     // Make sure you set the size of the component after
     // you add any child components.
     //setSize (800, 600);
-    addAndMakeVisible(&loadPluginButton);
     loadPluginButton.onClick = [this] {loadPluginButtonClicked(); };
+    addAndMakeVisible(loadPluginButton);
 
-    addAndMakeVisible(&openPluginEditorButton);
     openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
+    addAndMakeVisible(openPluginEditorButton);
+
+    midiKeyboard.setName ("MIDI Keyboard");
+    addAndMakeVisible(midiKeyboard);
+    keyboardState.addListener(this);
 }
 
 Interface::~Interface()
 {
     if (pluginWindow)
         delete pluginWindow;
+
+    keyboardState.removeListener(this);
 }
 
 void Interface::paint (juce::Graphics& g)
@@ -36,17 +43,23 @@ void Interface::paint (juce::Graphics& g)
 
 void Interface::resized()
 {
+    // TODO: clean up the mess here
     juce::Rectangle<int> buttonSize (0, 0, 108, 28);
     juce::Rectangle<int> area1 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
                          (getHeight() / 2) -  buttonSize.getHeight(),
                          buttonSize.getWidth(), buttonSize.getHeight());
 
     juce::Rectangle<int> area2 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                                (getHeight() / 2) -  buttonSize.getHeight() + 50,
+                                (getHeight() / 2) -  buttonSize.getHeight() + 30,
                                 buttonSize.getWidth(), buttonSize.getHeight());
     loadPluginButton.setBounds(area1);
 
     openPluginEditorButton.setBounds(area2);
+
+    auto margin = 10;
+
+    midiKeyboard.setBounds (margin, (getHeight() / 2) + (24 + margin), getWidth() - (2 * margin), 64);
+
 }
 
 void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
@@ -57,6 +70,21 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
     }
 }
 
+void Interface::handleNoteOn(juce::MidiKeyboardState *, int midiChannel, int midiNoteNumber, float velocity)
+{
+    juce::MidiMessage m (juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity));
+    m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+    audioComponent.addMidiEvent(m);
+
+}
+
+void Interface::handleNoteOff(juce::MidiKeyboardState *, int midiChannel, int midiNoteNumber, float velocity)
+{
+    juce::MidiMessage m (juce::MidiMessage::noteOff (midiChannel, midiNoteNumber, velocity));
+    m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+    audioComponent.addMidiEvent(m);
+}
+
 void Interface::loadPluginButtonClicked()
 {
     juce::FileChooser fileChooser("Select a plugin", {});
@@ -65,6 +93,8 @@ void Interface::loadPluginButtonClicked()
         auto filePath = fileChooser.getResult().getFullPathName();
         std::cout << "Path: " << filePath << std::endl;
         audioComponent.loadPlugin(filePath);
+        // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
+        audioComponent.prepareToPlay(512, 44100.f);
     }
 }
 
