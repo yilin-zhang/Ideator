@@ -17,7 +17,7 @@ public:
     PluginWindow(const juce::String &name, juce::Colour backgroundColour, int requiredButtons, bool addToDesktop);
     ~PluginWindow();
 
-    void setAndOpenPluginWindow(juce::AudioProcessorEditor&);
+    void setEditor(juce::AudioProcessorEditor& pluginEditor);
     void paint (juce::Graphics&) override;
     void resized() override;
     void closeButtonPressed() override ;

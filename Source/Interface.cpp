@@ -135,6 +135,13 @@ void Interface::loadPluginButtonClicked()
         audioComponent.loadPlugin(filePath);
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
         audioComponent.prepareToPlay(512, 44100.f);
+
+        // if there is a opened plugin window, reset the editor
+        if (pluginWindow)
+        {
+            auto editor = audioComponent.getPluginEditor();
+            pluginWindow->setEditor(*editor);
+        }
     }
 }
 
@@ -150,9 +157,14 @@ void Interface::openPluginEditorButtonClicked()
             return;
         }
 
+        // don't do anything if the window has already opened
+        if (pluginWindow)
+            return;
+
+        // create a new plugin window and initialize it
         pluginWindow = new PluginWindow("Plugin", juce::Colours::black, 7, true);
         pluginWindow->windowClosedBroadcaster.addChangeListener(this);
-        pluginWindow->setAndOpenPluginWindow(*editor);
+        pluginWindow->setEditor(*editor);
         pluginWindow->setVisible(true);
     }
     else

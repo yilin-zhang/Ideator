@@ -37,7 +37,7 @@ void PluginWindow::closeButtonPressed()
     windowClosedBroadcaster.sendChangeMessage();
 }
 
-void PluginWindow::setAndOpenPluginWindow(juce::AudioProcessorEditor& pluginEditor)
+void PluginWindow::setEditor(juce::AudioProcessorEditor& pluginEditor)
 {
     //setBoundsConstrained(juce::Rectangle<int>(pluginEditor.getWidth(), pluginEditor.getHeight()));
     setSize(pluginEditor.getWidth(), pluginEditor.getHeight());
