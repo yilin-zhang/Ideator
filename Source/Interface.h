@@ -15,7 +15,9 @@
 
 class Interface : public juce::Component,
                   private juce::ChangeListener,
-                  private juce::MidiKeyboardState::Listener
+                  private juce::MidiKeyboardState::Listener,
+                  private juce::OSCReceiver,
+                  private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
 {
 public:
     Interface(AudioComponent&);
@@ -29,6 +31,7 @@ private:
     AudioComponent& audioComponent;
     juce::TextButton loadPluginButton   { "Load Plugin" };
     juce::TextButton openPluginEditorButton   { "Open Plugin" };
+    juce::TextButton getRandomPatchButton   { "Random Patch" };
 
     // keyboardState is an argument when initializing midiKeyboard
     // and it should be put before the declaration of midiKeyboard
@@ -40,13 +43,19 @@ private:
     // ChangeListener
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
+    // OSC handling
+    juce::OSCSender oscSender;
+    void oscMessageReceived (const juce::OSCMessage& message) override;
+    void showConnectionErrorMessage (const juce::String& messageText);
+
     // MidiKeyboardState::Listener
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
 
-    // additional private methods
+    // button callbacks
     void loadPluginButtonClicked();
     void openPluginEditorButtonClicked();
+    void getRandomPatchButtonClicked();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Interface)
 };

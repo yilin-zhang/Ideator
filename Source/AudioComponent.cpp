@@ -156,8 +156,13 @@ bool AudioComponent::loadPlugin(const juce::String& path)
 
 juce::AudioProcessorEditor* AudioComponent::getPluginEditor()
 {
-    juce::AudioProcessorEditor* editor = plugin->createEditor();
-    return editor;
+    if (plugin->hasEditor())
+    {
+        juce::AudioProcessorEditor* editor = plugin->createEditor();
+        return editor;
+    }
+
+    return nullptr;
 }
 
 bool AudioComponent::checkPluginLoaded() const
@@ -165,11 +170,30 @@ bool AudioComponent::checkPluginLoaded() const
     return isPluginLoaded;
 }
 
-
 void AudioComponent::addMidiEvent(const juce::MidiMessage &midiMessage)
 {
     // NOTE: I hard coded sampleNumber 0 here
     //midiBuffer.addEvent(midiMessage, midiMessage.getTimeStamp());
     midiBuffer.addEvent(midiMessage, 0);
     //std::cout << "num events: " << midiBuffer.getNumEvents() << std::endl;
+}
+
+juce::PluginDescription AudioComponent::getPluginDescription() const
+{
+    // return an empty description if the plugin has not been loaded
+    if (!plugin)
+        return juce::PluginDescription();
+
+    return plugin->getPluginDescription();
+}
+
+const juce::Array<juce::AudioProcessorParameter*>& AudioComponent::getPluginParameters() const
+{
+    return plugin->getParameters();
+}
+
+void AudioComponent::setPluginParameter(int parameterIndex, float newValue)
+{
+    if (auto* param = plugin->getParameters()[parameterIndex])
+        param->setValue (newValue);
 }

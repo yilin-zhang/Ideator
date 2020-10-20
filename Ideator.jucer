@@ -4,6 +4,7 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="khuyTv" name="Ideator">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
+      <FILE id="E6OxqB" name="Config.h" compile="0" resource="0" file="Source/Config.h"/>
       <FILE id="blYncW" name="ConfigWindow.cpp" compile="1" resource="0"
             file="Source/ConfigWindow.cpp"/>
       <FILE id="AfbHKG" name="ConfigWindow.h" compile="0" resource="0" file="Source/ConfigWindow.h"/>
@@ -41,6 +42,7 @@
         <MODULEPATH id="juce_graphics" path="../../../JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../../../JUCE/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_osc" path="../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <CLION targetFolder="Builds/CLion" clionXcodeEnabled="1">
@@ -56,6 +58,7 @@
         <MODULEPATH id="juce_audio_formats"/>
         <MODULEPATH id="juce_audio_devices"/>
         <MODULEPATH id="juce_audio_basics"/>
+        <MODULEPATH id="juce_osc" path="../../JUCE/modules"/>
       </MODULEPATHS>
     </CLION>
   </EXPORTFORMATS>
@@ -71,6 +74,7 @@
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <LIVE_SETTINGS>
     <OSX/>

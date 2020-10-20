@@ -9,6 +9,7 @@
 */
 
 #include "Interface.h"
+#include "Config.h"
 
 Interface::Interface(AudioComponent& audioComponent) :
 audioComponent(audioComponent),
@@ -23,9 +24,21 @@ midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
     openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
     addAndMakeVisible(openPluginEditorButton);
 
+    getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
+    addAndMakeVisible(getRandomPatchButton);
+
     midiKeyboard.setName ("MIDI Keyboard");
     addAndMakeVisible(midiKeyboard);
     keyboardState.addListener(this);
+
+    // https://docs.juce.com/master/tutorial_osc_sender_receiver.html
+    // specify here on which UDP port number to receive incoming OSC messages
+    if (! connect (OSC_RECEIVE_PORT))
+        showConnectionErrorMessage ("Error: could not connect to UDP port " +
+        juce::String(OSC_RECEIVE_PORT) + ".");
+
+    addListener(this, OSC_RECEIVE_PATTERN + "set_parameter");
+    oscSender.connect(LOCAL_ADDRESS, OSC_SEND_PORT);
 }
 
 Interface::~Interface()
@@ -34,6 +47,8 @@ Interface::~Interface()
         delete pluginWindow;
 
     keyboardState.removeListener(this);
+
+    removeListener(this);
 }
 
 void Interface::paint (juce::Graphics& g)
@@ -46,15 +61,20 @@ void Interface::resized()
     // TODO: clean up the mess here
     juce::Rectangle<int> buttonSize (0, 0, 108, 28);
     juce::Rectangle<int> area1 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                         (getHeight() / 2) -  buttonSize.getHeight(),
+                         (getHeight() / 2) -  buttonSize.getHeight() - 30,
                          buttonSize.getWidth(), buttonSize.getHeight());
 
     juce::Rectangle<int> area2 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
+                                (getHeight() / 2) -  buttonSize.getHeight(),
+                                buttonSize.getWidth(), buttonSize.getHeight());
+
+    juce::Rectangle<int> area3 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
                                 (getHeight() / 2) -  buttonSize.getHeight() + 30,
                                 buttonSize.getWidth(), buttonSize.getHeight());
-    loadPluginButton.setBounds(area1);
 
+    loadPluginButton.setBounds(area1);
     openPluginEditorButton.setBounds(area2);
+    getRandomPatchButton.setBounds(area3);
 
     auto margin = 10;
 
@@ -68,6 +88,27 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
     {
         delete pluginWindow;
     }
+}
+
+void Interface::oscMessageReceived(const juce::OSCMessage &message)
+{
+    // handle the messages requesting to set parameters
+    if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "set_parameter")
+    .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+    {
+        // the format is: (parameterIndex, newValue, parameterIndex, newValue, ...)
+        int numParamsToSet = message.size() / 2;
+        for (int i=0; i<numParamsToSet*2; i+=2)
+            audioComponent.setPluginParameter(message[i].getInt32(), message[i+1].getFloat32());
+    }
+}
+
+void Interface::showConnectionErrorMessage (const juce::String& messageText)
+{
+    juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::WarningIcon,
+                                            "Connection error",
+                                            messageText,
+                                            "OK");
 }
 
 void Interface::handleNoteOn(juce::MidiKeyboardState *, int midiChannel, int midiNoteNumber, float velocity)
@@ -91,7 +132,6 @@ void Interface::loadPluginButtonClicked()
     if (fileChooser.browseForFileToOpen())
     {
         auto filePath = fileChooser.getResult().getFullPathName();
-        std::cout << "Path: " << filePath << std::endl;
         audioComponent.loadPlugin(filePath);
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
         audioComponent.prepareToPlay(512, 44100.f);
@@ -103,6 +143,13 @@ void Interface::openPluginEditorButtonClicked()
     if (audioComponent.checkPluginLoaded())
     {
         auto editor = audioComponent.getPluginEditor();
+
+        if (!editor)
+        {
+            std::cout << "The plugin does not have an editor" << std::endl;
+            return;
+        }
+
         pluginWindow = new PluginWindow("Plugin", juce::Colours::black, 7, true);
         pluginWindow->windowClosedBroadcaster.addChangeListener(this);
         pluginWindow->setAndOpenPluginWindow(*editor);
@@ -114,3 +161,32 @@ void Interface::openPluginEditorButtonClicked()
     }
 }
 
+void Interface::getRandomPatchButtonClicked()
+{
+    // check if the plugin has been loaded
+    if (!audioComponent.checkPluginLoaded())
+    {
+        std::cout << "No plugin loaded!" << std::endl;
+        return;
+    }
+
+    auto parameters = audioComponent.getPluginParameters();
+    int numParameters = parameters.size();
+    std::cout << "The plugin has: " << numParameters << " parameters" << std::endl;
+
+    // NOTE: Is it OK to do like this? what if the second command arrives before the first one?
+    // inform the python program how many parameters it has to generate
+    juce::OSCMessage msgNumParameters(OSC_SEND_PATTERN + "num_parameters", numParameters);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgNumParameters);
+
+    // inform the python program to generate a random patch and send it back
+    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "get_random_patch", 1);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
+
+    // NOTE: the following code is for sending osc messages
+    // for (int i=0; i<numParameters; ++i)
+    // {
+    //     juce::OSCMessage msgParamter(OSC_SEND_PATTERN + "parameter/" + juce::String(i), i);
+    //     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgParamter);
+    // }
+}

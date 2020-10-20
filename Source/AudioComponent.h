@@ -20,16 +20,17 @@ public:
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void releaseResources() override;
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
-    
+
+    // methods for the plugin
     bool loadPlugin(const juce::String& path);
-    juce::AudioProcessorEditor* getPluginEditor();
-
     bool checkPluginLoaded() const;
-
+    juce::AudioProcessorEditor* getPluginEditor();
     void addMidiEvent(const juce::MidiMessage &midiMessage);
+    juce::PluginDescription getPluginDescription() const;
+    const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const;
+    void setPluginParameter(int parameterIndex, float newValue);
 
 private:
-    //juce::AudioPluginInstance* plugin;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
     double sampleRate;
     int bufferSize;
