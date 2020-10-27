@@ -57,7 +57,13 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
+    // call this function after the plugin is loaded
+    void prepareToPlayForPlugin();
+
 private:
+    double internSampleRate;
+    int internSamplesPerBlock;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

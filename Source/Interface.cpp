@@ -133,9 +133,12 @@ void Interface::loadPluginButtonClicked()
     {
         auto filePath = fileChooser.getResult().getFullPathName();
         processorManager.loadPlugin(filePath);
+#ifdef IDEATOR_APP
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
         processorManager.prepareToPlay(512, 44100.f);
-
+#else
+        processorManager.prepareToPlay();
+#endif
         // if there is a opened plugin window, reset the editor
         if (pluginWindow)
         {

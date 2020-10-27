@@ -41,5 +41,6 @@ void PluginWindow::setEditor(juce::AudioProcessorEditor& pluginEditor)
 {
     //setBoundsConstrained(juce::Rectangle<int>(pluginEditor.getWidth(), pluginEditor.getHeight()));
     setSize(pluginEditor.getWidth(), pluginEditor.getHeight());
-    addAndMakeVisible(&pluginEditor);
+    //addAndMakeVisible(&pluginEditor);
+    setContentComponent(&pluginEditor);
 }

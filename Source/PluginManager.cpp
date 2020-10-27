@@ -11,14 +11,14 @@
 #include "PluginManager.h"
 
 PluginManager::PluginManager():
-plugin(nullptr),
-sampleRate(44100.f),
-bufferSize(256)
+        plugin(nullptr),
+        initialSampleRate(44100.f),
+        initialBufferSize(256)
 {
 
 }
 
-PluginManager::~PluginManager(){}
+PluginManager::~PluginManager()= default;
 
 /// Additional methods
 // https://github.com/fedden/RenderMan/blob/master/Source/RenderEngine.cpp
@@ -49,17 +49,17 @@ bool PluginManager::loadPlugin(const juce::String& path)
     //if (plugin != nullptr) delete plugin;
 
     plugin = pluginFormatManager.createPluginInstance (*pluginDescriptions[0],
-                                                       sampleRate,
-                                                       bufferSize,
+                                                       initialSampleRate,
+                                                       initialBufferSize,
                                                        errorMessage);
     if (plugin)
     {
         // Success so set up plugin, then set up features and get all available
         // parameters from this given plugin.
-        //plugin->prepareToPlay (sampleRate, bufferSize);
+        //plugin->prepareToPlay (initialSampleRate, initialBufferSize);
         //plugin->setNonRealtime (true);
 
-        //mfcc.setup (512, 42, 13, 20, int (sampleRate / 2), sampleRate);
+        //mfcc.setup (512, 42, 13, 20, int (initialSampleRate / 2), initialSampleRate);
 
         // Resize the pluginParameters patch type to fit this plugin and init
         // all the values to 0.0f!

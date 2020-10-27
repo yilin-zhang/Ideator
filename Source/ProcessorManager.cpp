@@ -21,26 +21,23 @@ audioProcessor(p)
 }
 #endif
 
-ProcessorManager::~ProcessorManager()
-{
-#ifdef IDEATOR_APP
-#endif
-}
+ProcessorManager::~ProcessorManager()= default;
 
+#ifdef IDEATOR_APP
 void ProcessorManager::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-#ifdef IDEATOR_APP
     audioProcessor.prepareToPlay(samplesPerBlockExpected, sampleRate);
-#else
-    // audioProcessor.prepareToPlay(sampleRate, samplesPerBlockExpected);
-#endif
 }
+#else
+void ProcessorManager::prepareToPlay()
+{
+    audioProcessor.prepareToPlayForPlugin();
+}
+#endif
 
 void ProcessorManager::releaseResources()
 {
-#ifdef IDEATOR_APP
     audioProcessor.releaseResources();
-#endif
 }
 
 /////////////////////////////////////

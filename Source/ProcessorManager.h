@@ -25,8 +25,11 @@ public:
 #endif
 
     virtual ~ProcessorManager();
-
+#ifdef IDEATOR_APP
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
+#else
+    void prepareToPlay ();
+#endif
     void releaseResources();
 
     // methods for the plugin

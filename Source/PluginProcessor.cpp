@@ -23,6 +23,7 @@ PluginProcessor::PluginProcessor()
 #endif
 )
 #endif
+,PluginManager(), internSampleRate(initialSampleRate), internSamplesPerBlock(initialBufferSize)
 {
 }
 
@@ -103,13 +104,13 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+
+    // store the sample rate and block size in case the plugin is not loaded
+    internSampleRate = sampleRate;
+    internSamplesPerBlock = samplesPerBlock;
+
     if (plugin)
-    {
         plugin->prepareToPlay(sampleRate, samplesPerBlock);
-        //std::cout << "plugin sample rate: " << plugin->getSampleRate() << std::endl;
-        //std::cout << "plugin num input channels: " << plugin->getTotalNumInputChannels() << std::endl;
-        //std::cout << "plugin num output channels: " << plugin->getTotalNumOutputChannels() << std::endl;
-    }
 }
 
 void PluginProcessor::releaseResources()
@@ -215,4 +216,11 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new PluginProcessor();
+}
+
+//==============================================================================
+void PluginProcessor::prepareToPlayForPlugin()
+{
+    if (plugin)
+        plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
 }

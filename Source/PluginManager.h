@@ -29,6 +29,9 @@ public:
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
     juce::MidiBuffer midiBuffer;
-    double sampleRate;
-    int bufferSize;
+
+    // NOTE: the values of these two variables are hard-coded in the constructor
+    const double initialSampleRate;
+    const int initialBufferSize;
+
 };
