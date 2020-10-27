@@ -1,19 +1,19 @@
 /*
   ==============================================================================
 
-    AudioComponent.cpp
+    AppProcessor.cpp
     Created: 12 Oct 2020 8:19:53pm
     Author:  Yilin Zhang
 
   ==============================================================================
 */
 
-#include "AudioComponent.h"
+#include "AppProcessor.h"
 
 
 
 //==============================================================================
-AudioComponent::AudioComponent() :
+AppProcessor::AppProcessor() :
 plugin(nullptr),
 sampleRate(44100.f),
 bufferSize(256),
@@ -36,13 +36,13 @@ isPluginLoaded(false)
     }
 }
 
-AudioComponent::~AudioComponent()
+AppProcessor::~AppProcessor()
 {
     // This shuts down the audio device and clears the audio source.
     shutdownAudio();
 }
 
-void AudioComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
+void AppProcessor::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     // This function will be called when the audio device is started, or when
     // its settings (i.e. sample rate, block size, etc) are changed.
@@ -60,7 +60,7 @@ void AudioComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRa
     }
 }
 
-void AudioComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
+void AppProcessor::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
     // Your audio-processing code goes here!
 
@@ -84,7 +84,7 @@ void AudioComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& buff
 
 }
 
-void AudioComponent::releaseResources()
+void AppProcessor::releaseResources()
 {
     // This will be called when the audio device stops, or when it is being
     // restarted due to a setting change.
@@ -97,7 +97,7 @@ void AudioComponent::releaseResources()
 
 /// Additional methods
 // https://github.com/fedden/RenderMan/blob/master/Source/RenderEngine.cpp
-bool AudioComponent::loadPlugin(const juce::String& path)
+bool AppProcessor::loadPlugin(const juce::String& path)
 {
     juce::OwnedArray<juce::PluginDescription> pluginDescriptions;
     juce::KnownPluginList pluginList;
@@ -147,14 +147,14 @@ bool AudioComponent::loadPlugin(const juce::String& path)
         return true;
     }
 
-    std::cout << "AudioComponent::loadPlugin error: "
+    std::cout << "AppProcessor::loadPlugin error: "
               << errorMessage.toStdString()
               << std::endl;
 
     return false;
 }
 
-juce::AudioProcessorEditor* AudioComponent::getPluginEditor()
+juce::AudioProcessorEditor* AppProcessor::getPluginEditor()
 {
     if (plugin->hasEditor())
     {
@@ -165,12 +165,12 @@ juce::AudioProcessorEditor* AudioComponent::getPluginEditor()
     return nullptr;
 }
 
-bool AudioComponent::checkPluginLoaded() const
+bool AppProcessor::checkPluginLoaded() const
 {
     return isPluginLoaded;
 }
 
-void AudioComponent::addMidiEvent(const juce::MidiMessage &midiMessage)
+void AppProcessor::addMidiEvent(const juce::MidiMessage &midiMessage)
 {
     // NOTE: I hard coded sampleNumber 0 here
     //midiBuffer.addEvent(midiMessage, midiMessage.getTimeStamp());
@@ -178,7 +178,7 @@ void AudioComponent::addMidiEvent(const juce::MidiMessage &midiMessage)
     //std::cout << "num events: " << midiBuffer.getNumEvents() << std::endl;
 }
 
-juce::PluginDescription AudioComponent::getPluginDescription() const
+juce::PluginDescription AppProcessor::getPluginDescription() const
 {
     // return an empty description if the plugin has not been loaded
     if (!plugin)
@@ -187,12 +187,12 @@ juce::PluginDescription AudioComponent::getPluginDescription() const
     return plugin->getPluginDescription();
 }
 
-const juce::Array<juce::AudioProcessorParameter*>& AudioComponent::getPluginParameters() const
+const juce::Array<juce::AudioProcessorParameter*>& AppProcessor::getPluginParameters() const
 {
     return plugin->getParameters();
 }
 
-void AudioComponent::setPluginParameter(int parameterIndex, float newValue)
+void AppProcessor::setPluginParameter(int parameterIndex, float newValue)
 {
     if (auto* param = plugin->getParameters()[parameterIndex])
         param->setValue (newValue);

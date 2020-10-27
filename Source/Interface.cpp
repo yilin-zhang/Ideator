@@ -11,7 +11,7 @@
 #include "Interface.h"
 #include "Config.h"
 
-Interface::Interface(AudioComponent& audioComponent) :
+Interface::Interface(AudioProcessorIf& audioComponent) :
 audioComponent(audioComponent),
 midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {

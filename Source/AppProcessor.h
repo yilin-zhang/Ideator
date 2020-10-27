@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    AudioComponent.h
+    AppProcessor.h
     Created: 12 Oct 2020 8:19:53pm
     Author:  Yilin Zhang
 
@@ -11,11 +11,11 @@
 #pragma once
 #include <JuceHeader.h>
 
-class AudioComponent : public juce::AudioAppComponent
+class AppProcessor : public juce::AudioAppComponent
 {
 public:
-    AudioComponent();
-    ~AudioComponent();
+    AppProcessor();
+    ~AppProcessor();
     
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void releaseResources() override;
@@ -38,5 +38,5 @@ private:
 
     juce::MidiBuffer midiBuffer;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AppProcessor)
 };

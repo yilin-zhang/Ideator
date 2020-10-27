@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="ezy7iH" name="Ideator" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+<JUCERPROJECT id="ezy7iH" name="Ideator" projectType="guiapp" addUsingNamespaceToJuceHeader="0"
+              jucerFormatVersion="1" displaySplashScreen="1" defines="IDEATOR_APP">
   <MAINGROUP id="khuyTv" name="Ideator">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
+      <FILE id="DBjAdq" name="AudioProcessorIf.cpp" compile="1" resource="0"
+            file="Source/AudioProcessorIf.cpp"/>
+      <FILE id="woc5II" name="AudioProcessorIf.h" compile="0" resource="0"
+            file="Source/AudioProcessorIf.h"/>
       <FILE id="E6OxqB" name="Config.h" compile="0" resource="0" file="Source/Config.h"/>
       <FILE id="blYncW" name="ConfigWindow.cpp" compile="1" resource="0"
             file="Source/ConfigWindow.cpp"/>
@@ -11,10 +15,9 @@
       <FILE id="S0Yi3i" name="PluginWindow.cpp" compile="1" resource="0"
             file="Source/PluginWindow.cpp"/>
       <FILE id="dPaYe8" name="PluginWindow.h" compile="0" resource="0" file="Source/PluginWindow.h"/>
-      <FILE id="B5CDUT" name="AudioComponent.cpp" compile="1" resource="0"
-            file="Source/AudioComponent.cpp"/>
-      <FILE id="Ulw2A1" name="AudioComponent.h" compile="0" resource="0"
-            file="Source/AudioComponent.h"/>
+      <FILE id="B5CDUT" name="AppProcessor.cpp" compile="1" resource="0"
+            file="Source/AppProcessor.cpp"/>
+      <FILE id="Ulw2A1" name="AppProcessor.h" compile="0" resource="0" file="Source/AppProcessor.h"/>
       <FILE id="VF5Key" name="Interface.cpp" compile="1" resource="0" file="Source/Interface.cpp"/>
       <FILE id="lGfUrC" name="Interface.h" compile="0" resource="0" file="Source/Interface.h"/>
       <FILE id="AUr0wx" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
