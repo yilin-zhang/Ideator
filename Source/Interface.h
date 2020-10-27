@@ -10,7 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include "AudioProcessorIf.h"
+#include "ProcessorManager.h"
 #include "PluginWindow.h"
 
 class Interface : public juce::Component,
@@ -20,7 +20,7 @@ class Interface : public juce::Component,
                   private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
 {
 public:
-    Interface(AudioProcessorIf&);
+    Interface(ProcessorManager&);
     ~Interface();
 
     void paint (juce::Graphics&) override;
@@ -28,7 +28,7 @@ public:
 
 private:
     //connection to AudioProcessingComponent (passed from parent)
-    AudioProcessorIf& audioComponent;
+    ProcessorManager& processorManager;
     juce::TextButton loadPluginButton   { "Load Plugin" };
     juce::TextButton openPluginEditorButton   { "Open Plugin" };
     juce::TextButton getRandomPatchButton   { "Random Patch" };

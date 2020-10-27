@@ -11,9 +11,9 @@
 #include "Interface.h"
 #include "Config.h"
 
-Interface::Interface(AudioProcessorIf& audioComponent) :
-audioComponent(audioComponent),
-midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
+Interface::Interface(ProcessorManager& pm) :
+        processorManager(pm),
+        midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     // Make sure you set the size of the component after
     // you add any child components.
@@ -99,7 +99,7 @@ void Interface::oscMessageReceived(const juce::OSCMessage &message)
         // the format is: (parameterIndex, newValue, parameterIndex, newValue, ...)
         int numParamsToSet = message.size() / 2;
         for (int i=0; i<numParamsToSet*2; i+=2)
-            audioComponent.setPluginParameter(message[i].getInt32(), message[i+1].getFloat32());
+            processorManager.setPluginParameter(message[i].getInt32(), message[i + 1].getFloat32());
     }
 }
 
@@ -115,7 +115,7 @@ void Interface::handleNoteOn(juce::MidiKeyboardState *, int midiChannel, int mid
 {
     juce::MidiMessage m (juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity));
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-    audioComponent.addMidiEvent(m);
+    processorManager.addMidiEvent(m);
 
 }
 
@@ -123,7 +123,7 @@ void Interface::handleNoteOff(juce::MidiKeyboardState *, int midiChannel, int mi
 {
     juce::MidiMessage m (juce::MidiMessage::noteOff (midiChannel, midiNoteNumber, velocity));
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
-    audioComponent.addMidiEvent(m);
+    processorManager.addMidiEvent(m);
 }
 
 void Interface::loadPluginButtonClicked()
@@ -132,14 +132,14 @@ void Interface::loadPluginButtonClicked()
     if (fileChooser.browseForFileToOpen())
     {
         auto filePath = fileChooser.getResult().getFullPathName();
-        audioComponent.loadPlugin(filePath);
+        processorManager.loadPlugin(filePath);
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
-        audioComponent.prepareToPlay(512, 44100.f);
+        processorManager.prepareToPlay(512, 44100.f);
 
         // if there is a opened plugin window, reset the editor
         if (pluginWindow)
         {
-            auto editor = audioComponent.getPluginEditor();
+            auto editor = processorManager.getPluginEditor();
             pluginWindow->setEditor(*editor);
         }
     }
@@ -147,9 +147,9 @@ void Interface::loadPluginButtonClicked()
 
 void Interface::openPluginEditorButtonClicked()
 {
-    if (audioComponent.checkPluginLoaded())
+    if (processorManager.checkPluginLoaded())
     {
-        auto editor = audioComponent.getPluginEditor();
+        auto editor = processorManager.getPluginEditor();
 
         if (!editor)
         {
@@ -176,13 +176,13 @@ void Interface::openPluginEditorButtonClicked()
 void Interface::getRandomPatchButtonClicked()
 {
     // check if the plugin has been loaded
-    if (!audioComponent.checkPluginLoaded())
+    if (!processorManager.checkPluginLoaded())
     {
         std::cout << "No plugin loaded!" << std::endl;
         return;
     }
 
-    auto parameters = audioComponent.getPluginParameters();
+    auto parameters = processorManager.getPluginParameters();
     int numParameters = parameters.size();
     std::cout << "The plugin has: " << numParameters << " parameters" << std::endl;
 

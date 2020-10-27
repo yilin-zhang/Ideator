@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "Interface.h"
-#include "AudioProcessorIf.h"
+#include "ProcessorManager.h"
 
 //==============================================================================
 /*
@@ -24,7 +24,7 @@ private:
     //==============================================================================
     // Your private member variables go here...
     Interface interface;
-    AudioProcessorIf audioComponent;
+    ProcessorManager audioComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

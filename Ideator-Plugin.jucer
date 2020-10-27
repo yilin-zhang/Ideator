@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="ezy7iH" name="Ideator" projectType="guiapp" addUsingNamespaceToJuceHeader="0"
-              jucerFormatVersion="1" displaySplashScreen="1" defines="IDEATOR_APP">
-  <MAINGROUP id="khuyTv" name="Ideator">
+<JUCERPROJECT id="ezy7iH" name="Ideator-Plugin" projectType="audioplug" addUsingNamespaceToJuceHeader="0"
+              displaySplashScreen="1" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
+  <MAINGROUP id="khuyTv" name="Ideator-Plugin">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
-      <FILE id="dyZ7Jl" name="PluginManagerIf.h" compile="0" resource="0"
-            file="Source/PluginManagerIf.h"/>
-      <FILE id="YECaKM" name="ProcessorManager.cpp" compile="1" resource="0"
+      <FILE id="uvKlm3" name="ProcessorManager.cpp" compile="1" resource="0"
             file="Source/ProcessorManager.cpp"/>
-      <FILE id="wXww1U" name="ProcessorManager.h" compile="0" resource="0"
+      <FILE id="fQCtJd" name="ProcessorManager.h" compile="0" resource="0"
             file="Source/ProcessorManager.h"/>
-      <FILE id="OBlDCS" name="PluginManager.cpp" compile="1" resource="0"
+      <FILE id="jTKcKy" name="PluginManager.cpp" compile="1" resource="0"
             file="Source/PluginManager.cpp"/>
-      <FILE id="G9uISx" name="PluginManager.h" compile="0" resource="0" file="Source/PluginManager.h"/>
+      <FILE id="qF4kxG" name="PluginManager.h" compile="0" resource="0" file="Source/PluginManager.h"/>
+      <FILE id="YfgrvU" name="PluginManagerIf.h" compile="0" resource="0"
+            file="Source/PluginManagerIf.h"/>
+      <FILE id="FrcQIU" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="fWdnyc" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="cNW5M4" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="vD3q32" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <FILE id="E6OxqB" name="Config.h" compile="0" resource="0" file="Source/Config.h"/>
       <FILE id="blYncW" name="ConfigWindow.cpp" compile="1" resource="0"
             file="Source/ConfigWindow.cpp"/>
@@ -20,15 +27,8 @@
       <FILE id="S0Yi3i" name="PluginWindow.cpp" compile="1" resource="0"
             file="Source/PluginWindow.cpp"/>
       <FILE id="dPaYe8" name="PluginWindow.h" compile="0" resource="0" file="Source/PluginWindow.h"/>
-      <FILE id="B5CDUT" name="AppProcessor.cpp" compile="1" resource="0"
-            file="Source/AppProcessor.cpp"/>
-      <FILE id="Ulw2A1" name="AppProcessor.h" compile="0" resource="0" file="Source/AppProcessor.h"/>
       <FILE id="VF5Key" name="Interface.cpp" compile="1" resource="0" file="Source/Interface.cpp"/>
       <FILE id="lGfUrC" name="Interface.h" compile="0" resource="0" file="Source/Interface.h"/>
-      <FILE id="AUr0wx" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
-      <FILE id="CciajY" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
-      <FILE id="oigJlU" name="MainComponent.cpp" compile="1" resource="0"
-            file="Source/MainComponent.cpp"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_PLUGINHOST_AU="1"/>
@@ -51,6 +51,7 @@
         <MODULEPATH id="juce_gui_basics" path="../../../JUCE/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../../../JUCE/modules"/>
         <MODULEPATH id="juce_osc" path="../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <CLION targetFolder="Builds/CLion" clionXcodeEnabled="1">
@@ -67,6 +68,7 @@
         <MODULEPATH id="juce_audio_devices"/>
         <MODULEPATH id="juce_audio_basics"/>
         <MODULEPATH id="juce_osc" path="../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../JUCE/modules"/>
       </MODULEPATHS>
     </CLION>
   </EXPORTFORMATS>
@@ -74,6 +76,8 @@
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
     <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
