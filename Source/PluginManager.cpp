@@ -28,9 +28,11 @@ bool PluginManager::loadPlugin(const juce::String& path)
     juce::KnownPluginList pluginList;
     juce::AudioPluginFormatManager pluginFormatManager;
 
-    pluginFormatManager.addDefaultFormats();
+    // release resources before loading a new plugin
+    if (plugin)
+        plugin->releaseResources();
 
-    std::cout << "getNumFormats(): " << pluginFormatManager.getNumFormats() << std::endl;
+    pluginFormatManager.addDefaultFormats();
 
     for (int i = 0; i < pluginFormatManager.getNumFormats(); ++i)
     {
@@ -65,7 +67,7 @@ bool PluginManager::loadPlugin(const juce::String& path)
         // all the values to 0.0f!
         //fillAvailablePluginParameters (pluginParameters);
 
-        std::cout << "Successfully loaded!" << std::endl;
+        std::cout << "Plugin loaded!" << std::endl;
 
         return true;
     }
