@@ -61,9 +61,6 @@ public:
     // call this function after the plugin is loaded
     void prepareToPlayForPlugin();
 
-private:
-    double internSampleRate;
-    int internSamplesPerBlock;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

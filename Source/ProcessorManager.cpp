@@ -76,3 +76,8 @@ void ProcessorManager::setPluginParameter(int parameterIndex, float newValue)
 {
     audioProcessor.setPluginParameter(parameterIndex, newValue);
 }
+
+bool ProcessorManager::renderAudio(juce::String &audioPath)
+{
+    return audioProcessor.renderAudio(audioPath);
+}

@@ -9,13 +9,16 @@
 */
 
 #include "PluginManager.h"
+#include <sstream>
+#include <ctime>
 
 PluginManager::PluginManager():
         plugin(nullptr),
         initialSampleRate(44100.f),
-        initialBufferSize(256)
+        initialBufferSize(256),
+        internSampleRate(initialSampleRate),
+        internSamplesPerBlock(initialBufferSize)
 {
-
 }
 
 PluginManager::~PluginManager()= default;
@@ -123,4 +126,99 @@ void PluginManager::setPluginParameter(int parameterIndex, float newValue)
 {
     if (auto* param = plugin->getParameters()[parameterIndex])
         param->setValue (newValue);
+}
+
+bool PluginManager::renderAudio(juce::String &audioPath)
+{
+    if (!plugin)
+        return false;
+
+    // initialize constants
+    const double audioLength = 3.; // 3 seconds of audio
+    const double noteLength = 2.;
+    const int numSamples = static_cast<int>(internSampleRate) * static_cast<int>(audioLength);
+    const int numNoteSamples = static_cast<int>(internSampleRate) * static_cast<int>(noteLength);
+    const int blockSize = internSamplesPerBlock;
+    const int numChannels = plugin->getTotalNumOutputChannels();
+    const int midiNote = 60;
+    const uint8_t midiVelocity = 127;
+
+    // initialize audio buffers
+    juce::AudioBuffer<float> bufferToProcess(numChannels, blockSize);
+    juce::AudioBuffer<float> bufferToSave(numChannels, numSamples);
+
+    // create midi on and off messages
+    // The timestamp indicates the number of audio samples from the start of the midi buffer.
+    juce::MidiMessage onMessage;
+    onMessage = juce::MidiMessage::noteOn(1,
+                                          midiNote,
+                                          midiVelocity);
+    onMessage.setTimeStamp(0);
+    juce::MidiMessage offMessage;
+    offMessage = juce::MidiMessage::noteOff(1,
+                                          midiNote,
+                                          midiVelocity);
+
+    // add on message to the buffer
+    juce::MidiBuffer midiNoteBuffer;
+    midiNoteBuffer.addEvent(onMessage, onMessage.getTimeStamp());
+
+    // set plugin to non-realtime mode and process the block
+    plugin->setNonRealtime(true);
+
+    // process
+    bool hasNoteOff = false;
+    for (int currentSample=0, numSamplesToCopy=0; currentSample < numSamples; currentSample+=blockSize)
+    {
+        if (currentSample >= numNoteSamples && !hasNoteOff)
+        {
+            offMessage.setTimeStamp(currentSample - numNoteSamples);
+            midiNoteBuffer.addEvent(offMessage, offMessage.getTimeStamp());
+            hasNoteOff = true;
+        }
+
+        plugin->processBlock(bufferToProcess, midiNoteBuffer);
+
+        if (numSamples - currentSample < blockSize)
+            numSamplesToCopy = numSamples - currentSample;
+        else
+            numSamplesToCopy = blockSize;
+
+        for (int i=0; i<numChannels; ++i)
+            bufferToSave.copyFrom(
+                    i,
+                    currentSample,
+                    bufferToProcess,
+                    i,
+                    0,
+                    numSamplesToCopy);
+    }
+
+    // save the bufferToSave to wav
+    // get time stamp
+    time_t now = time(nullptr);
+    std::stringstream timeStringStream;
+    timeStringStream << now;
+    // form the audio path
+    audioPath = "/tmp/Ideator/" + timeStringStream.str() + ".wav";
+    // save to file
+    juce::WavAudioFormat format;
+    std::unique_ptr<juce::AudioFormatWriter> writer;
+    juce::File wavFile(audioPath);
+    wavFile.createDirectory();
+    wavFile.deleteFile();
+    writer.reset (format.createWriterFor (new juce::FileOutputStream (wavFile),
+                                          internSampleRate,
+                                          bufferToSave.getNumChannels(),
+                                          24,
+                                          {},
+                                          0));
+    if (writer != nullptr)
+        writer->writeFromAudioSampleBuffer (bufferToSave, 0, bufferToSave.getNumSamples());
+
+    // set the plugin state back to realtime mode
+    plugin->setNonRealtime(false);
+    plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
+
+    return true;
 }

@@ -25,6 +25,7 @@ public:
     juce::PluginDescription getPluginDescription() const override;
     const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const override;
     void setPluginParameter(int parameterIndex, float newValue) override;
+    bool renderAudio(juce::String &audioPath) override;
 
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
@@ -33,5 +34,8 @@ protected:
     // NOTE: the values of these two variables are hard-coded in the constructor
     const double initialSampleRate;
     const int initialBufferSize;
+
+    double internSampleRate;
+    int internSamplesPerBlock;
 
 };

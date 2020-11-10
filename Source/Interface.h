@@ -32,6 +32,7 @@ private:
     juce::TextButton loadPluginButton   { "Load Plugin" };
     juce::TextButton openPluginEditorButton   { "Open Plugin" };
     juce::TextButton getRandomPatchButton   { "Random Patch" };
+    juce::TextButton renderAudioButton { "Render Audio" };
 
     // keyboardState is an argument when initializing midiKeyboard
     // and it should be put before the declaration of midiKeyboard
@@ -56,6 +57,7 @@ private:
     void loadPluginButtonClicked();
     void openPluginEditorButtonClicked();
     void getRandomPatchButtonClicked();
+    void renderAudioButtonClicked();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Interface)
 };

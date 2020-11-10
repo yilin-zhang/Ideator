@@ -27,6 +27,9 @@ Interface::Interface(ProcessorManager& pm) :
     getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
     addAndMakeVisible(getRandomPatchButton);
 
+    renderAudioButton.onClick = [this] {renderAudioButtonClicked(); };
+    addAndMakeVisible(renderAudioButton);
+
     midiKeyboard.setName ("MIDI Keyboard");
     addAndMakeVisible(midiKeyboard);
     keyboardState.addListener(this);
@@ -72,13 +75,18 @@ void Interface::resized()
                                 (getHeight() / 2) -  buttonSize.getHeight() + 30,
                                 buttonSize.getWidth(), buttonSize.getHeight());
 
+    juce::Rectangle<int> area4 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
+                                (getHeight() / 2) -  buttonSize.getHeight() + 60,
+                                buttonSize.getWidth(), buttonSize.getHeight());
+
     loadPluginButton.setBounds(area1);
     openPluginEditorButton.setBounds(area2);
     getRandomPatchButton.setBounds(area3);
+    renderAudioButton.setBounds(area4);
 
     auto margin = 10;
 
-    midiKeyboard.setBounds (margin, (getHeight() / 2) + (24 + margin), getWidth() - (2 * margin), 64);
+    midiKeyboard.setBounds (margin, (getHeight() / 2) + (50 + margin), getWidth() - (2 * margin), 64);
 
 }
 
@@ -204,4 +212,24 @@ void Interface::getRandomPatchButtonClicked()
     //     juce::OSCMessage msgParamter(OSC_SEND_PATTERN + "parameter/" + juce::String(i), i);
     //     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgParamter);
     // }
+}
+
+void Interface::renderAudioButtonClicked()
+{
+    // check if the plugin has been loaded
+    if (!processorManager.checkPluginLoaded())
+    {
+        std::cout << "No plugin loaded!" << std::endl;
+        return;
+    }
+
+    // get the audio path
+    juce::String audioPath;
+    bool renderSucceeded = processorManager.renderAudio(audioPath);
+    if (!renderSucceeded)
+        return;
+
+    // inform the python program to fetch the data
+    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "render_audio/" + audioPath, 1);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
 }

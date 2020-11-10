@@ -23,7 +23,7 @@ PluginProcessor::PluginProcessor()
 #endif
 )
 #endif
-,PluginManager(), internSampleRate(initialSampleRate), internSamplesPerBlock(initialBufferSize)
+,PluginManager()
 {
 }
 

@@ -22,5 +22,6 @@ public:
     virtual juce::PluginDescription getPluginDescription() const = 0;
     virtual const juce::Array<juce::AudioProcessorParameter *> &getPluginParameters() const = 0;
     virtual void setPluginParameter(int parameterIndex, float newValue) = 0;
+    virtual bool renderAudio(juce::String &audioPath) = 0;
 };
 

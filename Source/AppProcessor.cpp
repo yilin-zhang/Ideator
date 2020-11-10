@@ -54,6 +54,8 @@ void AppProcessor::prepareToPlay (int samplesPerBlockExpected, double sampleRate
         std::cout << "plugin num input channels: " << plugin->getTotalNumInputChannels() << std::endl;
         std::cout << "plugin num output channels: " << plugin->getTotalNumOutputChannels() << std::endl;
     }
+    internSamplesPerBlock = samplesPerBlockExpected;
+    internSampleRate = sampleRate;
 }
 
 void AppProcessor::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
