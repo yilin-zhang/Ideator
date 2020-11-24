@@ -13,14 +13,10 @@
 PluginWindow::PluginWindow(const juce::String &name, juce::Colour backgroundColour, int requiredButtons, bool addToDesktop=true) :
 DocumentWindow(name, backgroundColour, requiredButtons, addToDesktop)
 {
-    //setDraggable(true);
-    //setConstrainer(&boundsConstrainer);
     setUsingNativeTitleBar(true);
 }
 
-PluginWindow::~PluginWindow()
-{
-}
+PluginWindow::~PluginWindow()= default;
 
 void PluginWindow::paint (juce::Graphics&)
 {
@@ -37,10 +33,7 @@ void PluginWindow::closeButtonPressed()
     windowClosedBroadcaster.sendChangeMessage();
 }
 
-void PluginWindow::setEditor(juce::AudioProcessorEditor& pluginEditor)
+void PluginWindow::setEditor(juce::AudioProcessorEditor* pluginEditor)
 {
-    //setBoundsConstrained(juce::Rectangle<int>(pluginEditor.getWidth(), pluginEditor.getHeight()));
-    setSize(pluginEditor.getWidth(), pluginEditor.getHeight());
-    //addAndMakeVisible(&pluginEditor);
-    setContentComponent(&pluginEditor);
+    setContentOwned(pluginEditor, true);
 }

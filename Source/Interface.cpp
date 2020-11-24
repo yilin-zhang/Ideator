@@ -47,7 +47,7 @@ Interface::Interface(ProcessorManager& pm) :
 Interface::~Interface()
 {
     if (pluginWindow)
-        delete pluginWindow;
+        pluginWindow.deleteAndZero();
 
     keyboardState.removeListener(this);
 
@@ -93,9 +93,7 @@ void Interface::resized()
 void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (pluginWindow && (source == &pluginWindow->windowClosedBroadcaster))
-    {
-        delete pluginWindow;
-    }
+        pluginWindow.deleteAndZero();
 }
 
 void Interface::oscMessageReceived(const juce::OSCMessage &message)
@@ -139,6 +137,12 @@ void Interface::loadPluginButtonClicked()
     juce::FileChooser fileChooser("Select a plugin", {});
     if (fileChooser.browseForFileToOpen())
     {
+        // If there is a opened plugin window, delete it.
+        // Must delete the window before loading a new plugin
+        // because the plugin editor is bounded to its plugin processor
+        if (pluginWindow)
+            pluginWindow.deleteAndZero();
+
         auto filePath = fileChooser.getResult().getFullPathName();
         processorManager.loadPlugin(filePath);
 #ifdef IDEATOR_APP
@@ -147,12 +151,6 @@ void Interface::loadPluginButtonClicked()
 #else
         processorManager.prepareToPlay();
 #endif
-        // if there is a opened plugin window, reset the editor
-        if (pluginWindow)
-        {
-            auto editor = processorManager.getPluginEditor();
-            pluginWindow->setEditor(*editor);
-        }
     }
 }
 
@@ -175,7 +173,7 @@ void Interface::openPluginEditorButtonClicked()
         // create a new plugin window and initialize it
         pluginWindow = new PluginWindow("Plugin", juce::Colours::black, 7, true);
         pluginWindow->windowClosedBroadcaster.addChangeListener(this);
-        pluginWindow->setEditor(*editor);
+        pluginWindow->setEditor(editor);
         pluginWindow->setVisible(true);
     }
     else

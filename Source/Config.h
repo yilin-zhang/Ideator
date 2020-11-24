@@ -18,3 +18,5 @@ const int OSC_SEND_PORT = 7777;
 
 const juce::String OSC_SEND_PATTERN = "/Ideator/python/";
 const juce::String OSC_RECEIVE_PATTERN = "/Ideator/cpp/";
+
+const juce::String TMP_AUDIO_DIR = "/tmp/Ideator/";

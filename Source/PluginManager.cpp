@@ -9,6 +9,7 @@
 */
 
 #include "PluginManager.h"
+#include "Config.h"
 #include <sstream>
 #include <ctime>
 
@@ -147,6 +148,7 @@ bool PluginManager::renderAudio(juce::String &audioPath)
     juce::AudioBuffer<float> bufferToProcess(numChannels, blockSize);
     juce::AudioBuffer<float> bufferToSave(numChannels, numSamples);
 
+//    bufferToSave.clear();
     // create midi on and off messages
     // The timestamp indicates the number of audio samples from the start of the midi buffer.
     juce::MidiMessage onMessage;
@@ -165,6 +167,8 @@ bool PluginManager::renderAudio(juce::String &audioPath)
 
     // set plugin to non-realtime mode and process the block
     plugin->setNonRealtime(true);
+    // must call prepareToPlay to enable the non-realtime setting
+    plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
 
     // process
     bool hasNoteOff = false;
@@ -177,12 +181,11 @@ bool PluginManager::renderAudio(juce::String &audioPath)
             hasNoteOff = true;
         }
 
+        bufferToProcess.clear();
         plugin->processBlock(bufferToProcess, midiNoteBuffer);
 
-        if (numSamples - currentSample < blockSize)
-            numSamplesToCopy = numSamples - currentSample;
-        else
-            numSamplesToCopy = blockSize;
+        numSamplesToCopy = numSamples - currentSample < blockSize ?
+                           numSamples - currentSample : blockSize;
 
         for (int i=0; i<numChannels; ++i)
             bufferToSave.copyFrom(
@@ -200,13 +203,16 @@ bool PluginManager::renderAudio(juce::String &audioPath)
     std::stringstream timeStringStream;
     timeStringStream << now;
     // form the audio path
-    audioPath = "/tmp/Ideator/" + timeStringStream.str() + ".wav";
+    audioPath = TMP_AUDIO_DIR + timeStringStream.str() + ".wav";
     // save to file
     juce::WavAudioFormat format;
     std::unique_ptr<juce::AudioFormatWriter> writer;
     juce::File wavFile(audioPath);
-    wavFile.createDirectory();
-    wavFile.deleteFile();
+    juce::File wavDir(TMP_AUDIO_DIR);
+    // create the directory if it doesn't exist
+    if (!wavDir.createDirectory())
+        return false;
+
     writer.reset (format.createWriterFor (new juce::FileOutputStream (wavFile),
                                           internSampleRate,
                                           bufferToSave.getNumChannels(),
