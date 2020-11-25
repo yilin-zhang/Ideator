@@ -271,7 +271,7 @@ void Interface::savePresetButtonClicked()
 
 }
 
-std::vector<juce::String> getTags()
+std::vector<juce::String> Interface::getTags() const
 {
     // TODO: finish this
     return {"xxx"};
