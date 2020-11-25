@@ -15,6 +15,7 @@
 
 class Interface : public juce::Component,
                   private juce::ChangeListener,
+                  private juce::Label::Listener,
                   private juce::MidiKeyboardState::Listener,
                   private juce::OSCReceiver,
                   private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
@@ -27,37 +28,56 @@ public:
     void resized() override;
 
 private:
-    //connection to AudioProcessingComponent (passed from parent)
     ProcessorManager& processorManager;
-    juce::TextButton loadPluginButton   { "Load Plugin" };
-    juce::TextButton openPluginEditorButton   { "Open Plugin" };
-    juce::TextButton getRandomPatchButton   { "Random Patch" };
-    juce::TextButton renderAudioButton { "Render Audio" };
-
-    // keyboardState is an argument when initializing midiKeyboard
-    // and it should be put before the declaration of midiKeyboard
-    juce::MidiKeyboardState keyboardState;
-    juce::MidiKeyboardComponent midiKeyboard;
-
     juce::Component::SafePointer<PluginWindow> pluginWindow;
 
-    // ChangeListener
+    void initializeComponents();
+
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+    void labelTextChanged(juce::Label* labelThatHasChanged) override;
 
     // OSC handling
     juce::OSCSender oscSender;
     void oscMessageReceived (const juce::OSCMessage& message) override;
-    void showConnectionErrorMessage (const juce::String& messageText);
+    static void showConnectionErrorMessage (const juce::String& messageText);
 
+    /// functionalities
+    // load plugin
+    juce::TextButton loadPluginButton   { "Load Plugin" };
+    void loadPluginButtonClicked();
+    // open the plugin editor
+    juce::TextButton openPluginEditorButton   { "Open Plugin" };
+    void openPluginEditorButtonClicked();
+    // get a random patch
+    juce::TextButton getRandomPatchButton   { "Random Patch" };
+    void getRandomPatchButtonClicked();
+    // render the audio
+    juce::TextButton renderAudioButton { "Render Audio" };
+    void renderAudioButtonClicked();
+    // save the preset
+    juce::TextButton savePresetButton { "Save Preset" };
+    void savePresetButtonClicked();
+    // input box
+    juce::Value tagInputValue;
+    juce::TextEditor tagInputBox {"tagInput"};
+    std::vector<juce::String> getTags() const;
+    // search button
+    juce::TextButton searchButton {"Search"};
+    void searchButtonClicked();
+    // plugin name
+    juce::Label synthNameLabel;
+    // preset list
+    juce::ListBox presetList;
+    // generated tags
+
+    /// MIDI keyboard
+    // keyboardState is an argument when initializing midiKeyboard
+    // and it should be put before the declaration of midiKeyboard
+    juce::MidiKeyboardState keyboardState;
+    juce::MidiKeyboardComponent midiKeyboard;
     // MidiKeyboardState::Listener
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
-
-    // button callbacks
-    void loadPluginButtonClicked();
-    void openPluginEditorButtonClicked();
-    void getRandomPatchButtonClicked();
-    void renderAudioButtonClicked();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Interface)
 };

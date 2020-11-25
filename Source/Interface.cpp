@@ -17,22 +17,9 @@ Interface::Interface(ProcessorManager& pm) :
 {
     // Make sure you set the size of the component after
     // you add any child components.
-    //setSize (800, 600);
-    loadPluginButton.onClick = [this] {loadPluginButtonClicked(); };
-    addAndMakeVisible(loadPluginButton);
+    setSize (450, 450);
 
-    openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
-    addAndMakeVisible(openPluginEditorButton);
-
-    getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
-    addAndMakeVisible(getRandomPatchButton);
-
-    renderAudioButton.onClick = [this] {renderAudioButtonClicked(); };
-    addAndMakeVisible(renderAudioButton);
-
-    midiKeyboard.setName ("MIDI Keyboard");
-    addAndMakeVisible(midiKeyboard);
-    keyboardState.addListener(this);
+    initializeComponents();
 
     // https://docs.juce.com/master/tutorial_osc_sender_receiver.html
     // specify here on which UDP port number to receive incoming OSC messages
@@ -62,38 +49,79 @@ void Interface::paint (juce::Graphics& g)
 void Interface::resized()
 {
     // TODO: clean up the mess here
-    juce::Rectangle<int> buttonSize (0, 0, 108, 28);
-    juce::Rectangle<int> area1 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                         (getHeight() / 2) -  buttonSize.getHeight() - 30,
-                         buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> buttonSize (0, 0, 110, 30);
+    juce::Rectangle<int> loadPluginButtonArea (10,10,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> openPluginEditorButtonArea (10, 45,
+                                                     buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> renderAudioButtonArea (10, 80,
+                                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
+                                                   buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> savePresetButtonArea (10, 300,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
 
-    juce::Rectangle<int> area2 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                                (getHeight() / 2) -  buttonSize.getHeight(),
-                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> synthNameLabelArea (10, 150,
+                                             buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> inputBoxArea (160,10,200, 30);
+    juce::Rectangle<int> presetListArea (160,45,200, 300);
+    juce::Rectangle<int> searchButtonArea (370,10,70, 30);
+    const int keyboardMargin = 10;
+    juce::Rectangle<int> keyboardArea (keyboardMargin,getHeight()-64-keyboardMargin,
+                                       getWidth() - 2 * keyboardMargin, 64);
 
-    juce::Rectangle<int> area3 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                                (getHeight() / 2) -  buttonSize.getHeight() + 30,
-                                buttonSize.getWidth(), buttonSize.getHeight());
+    loadPluginButton.setBounds(loadPluginButtonArea);
+    openPluginEditorButton.setBounds(openPluginEditorButtonArea);
+    getRandomPatchButton.setBounds(getRandomPatchButtonArea);
+    renderAudioButton.setBounds(renderAudioButtonArea);
+    searchButton.setBounds(searchButtonArea);
+    savePresetButton.setBounds(savePresetButtonArea);
+    tagInputBox.setBounds(inputBoxArea);
+    synthNameLabel.setBounds(synthNameLabelArea);
+    presetList.setBounds(presetListArea);
+    midiKeyboard.setBounds(keyboardArea);
+}
 
-    juce::Rectangle<int> area4 ((getWidth()  / 2) - (buttonSize.getWidth() / 2),
-                                (getHeight() / 2) -  buttonSize.getHeight() + 60,
-                                buttonSize.getWidth(), buttonSize.getHeight());
+void Interface::initializeComponents()
+{
+    loadPluginButton.onClick = [this] {loadPluginButtonClicked(); };
+    addAndMakeVisible(loadPluginButton);
 
-    loadPluginButton.setBounds(area1);
-    openPluginEditorButton.setBounds(area2);
-    getRandomPatchButton.setBounds(area3);
-    renderAudioButton.setBounds(area4);
+    openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
+    addAndMakeVisible(openPluginEditorButton);
 
-    auto margin = 10;
+    getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
+    addAndMakeVisible(getRandomPatchButton);
 
-    midiKeyboard.setBounds (margin, (getHeight() / 2) + (50 + margin), getWidth() - (2 * margin), 64);
+    renderAudioButton.onClick = [this] {renderAudioButtonClicked(); };
+    addAndMakeVisible(renderAudioButton);
 
+    searchButton.onClick = [this] {searchButtonClicked(); };
+    addAndMakeVisible(searchButton);
+
+    savePresetButton.onClick = [this] {savePresetButtonClicked(); };
+    addAndMakeVisible(savePresetButton);
+
+    addAndMakeVisible(tagInputBox);
+    addAndMakeVisible(presetList);
+
+    synthNameLabel.addListener(this);
+    addAndMakeVisible(synthNameLabel);
+
+    midiKeyboard.setName ("MIDI Keyboard");
+    addAndMakeVisible(midiKeyboard);
+    keyboardState.addListener(this);
 }
 
 void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (pluginWindow && (source == &pluginWindow->windowClosedBroadcaster))
         pluginWindow.deleteAndZero();
+}
+
+void Interface::labelTextChanged(juce::Label *labelThatHasChanged)
+{
+    // NOTE: not sure if this is necessary, but let's just keep it for now
 }
 
 void Interface::oscMessageReceived(const juce::OSCMessage &message)
@@ -143,8 +171,9 @@ void Interface::loadPluginButtonClicked()
         if (pluginWindow)
             pluginWindow.deleteAndZero();
 
-        auto filePath = fileChooser.getResult().getFullPathName();
-        processorManager.loadPlugin(filePath);
+        processorManager.loadPlugin(fileChooser.getResult().getFullPathName());
+        synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
+                               juce::NotificationType::sendNotification);
 #ifdef IDEATOR_APP
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
         processorManager.prepareToPlay(512, 44100.f);
@@ -162,7 +191,7 @@ void Interface::openPluginEditorButtonClicked()
 
         if (!editor)
         {
-            std::cout << "The plugin does not have an editor" << std::endl;
+            DBG("The plugin does not have an editor");
             return;
         }
 
@@ -178,7 +207,7 @@ void Interface::openPluginEditorButtonClicked()
     }
     else
     {
-        std::cout << "No plugin loaded!" << std::endl;
+        DBG("No plugin loaded!");
     }
 }
 
@@ -187,7 +216,7 @@ void Interface::getRandomPatchButtonClicked()
     // check if the plugin has been loaded
     if (!processorManager.checkPluginLoaded())
     {
-        std::cout << "No plugin loaded!" << std::endl;
+        DBG("No plugin loaded!");
         return;
     }
 
@@ -217,7 +246,7 @@ void Interface::renderAudioButtonClicked()
     // check if the plugin has been loaded
     if (!processorManager.checkPluginLoaded())
     {
-        std::cout << "No plugin loaded!" << std::endl;
+        DBG("No plugin loaded!");
         return;
     }
 
@@ -230,4 +259,20 @@ void Interface::renderAudioButtonClicked()
     // inform the python program to fetch the data
     juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "render_audio/" + audioPath, 1);
     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
+}
+
+void Interface::searchButtonClicked()
+{
+    // TODO: send OSC to the python program to request the preset searching
+}
+
+void Interface::savePresetButtonClicked()
+{
+
+}
+
+std::vector<juce::String> getTags()
+{
+    // TODO: finish this
+    return {"xxx"};
 }

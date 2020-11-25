@@ -24,9 +24,5 @@ public:
 
     juce::ChangeBroadcaster windowClosedBroadcaster;
 
-private:
-    juce::ComponentBoundsConstrainer boundsConstrainer;
-
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginWindow)
 };
