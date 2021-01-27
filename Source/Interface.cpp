@@ -163,7 +163,11 @@ void Interface::handleNoteOff(juce::MidiKeyboardState *, int midiChannel, int mi
 void Interface::loadPluginButtonClicked()
 {
     juce::FileChooser fileChooser("Select a plugin", {});
+#if __linux__
+    if (fileChooser.browseForDirectory())
+#else
     if (fileChooser.browseForFileToOpen())
+#endif
     {
         // If there is a opened plugin window, delete it.
         // Must delete the window before loading a new plugin
