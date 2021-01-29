@@ -228,3 +228,34 @@ bool PluginManager::renderAudio(juce::String &audioPath)
 
     return true;
 }
+
+void PluginManager::loadPreset(const juce::String &presetPath)
+{
+    if (!plugin)
+        return;
+
+    juce::File inputFile(presetPath);
+    auto xmlState = juce::XmlDocument::parse(inputFile);
+    juce::MemoryBlock stateBlock;
+    juce::AudioProcessor::copyXmlToBinary(*xmlState, stateBlock);
+
+    plugin->setStateInformation(stateBlock.getData(), stateBlock.getSize());
+}
+
+void PluginManager::savePreset(const juce::String &presetPath)
+{
+    if (!plugin)
+        return;
+
+    juce::MemoryBlock stateBlock;
+    plugin->getStateInformation(stateBlock);
+    auto xmlState = juce::AudioProcessor::getXmlFromBinary(stateBlock.getData(), stateBlock.getSize());
+    if (!xmlState)
+    {
+        DBG("Data is unsuitable or corrupted.");
+        return;
+    }
+
+    juce::File outputFile(presetPath);
+    xmlState->writeTo(outputFile);
+}

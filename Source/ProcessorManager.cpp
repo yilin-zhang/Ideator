@@ -81,3 +81,13 @@ bool ProcessorManager::renderAudio(juce::String &audioPath)
 {
     return audioProcessor.renderAudio(audioPath);
 }
+
+void ProcessorManager::loadPreset(const juce::String &presetPath)
+{
+    audioProcessor.loadPreset(presetPath);
+}
+
+void ProcessorManager::savePreset(const juce::String &presetPath)
+{
+    audioProcessor.savePreset(presetPath);
+}

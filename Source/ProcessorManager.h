@@ -41,6 +41,8 @@ public:
     const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const override;
     void setPluginParameter(int parameterIndex, float newValue) override;
     bool renderAudio(juce::String &audioPath) override;
+    void loadPreset(const juce::String &presetPath) override;
+    void savePreset(const juce::String &presetPath) override;
 
 private:
 #ifdef IDEATOR_APP

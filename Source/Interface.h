@@ -54,6 +54,9 @@ private:
     // render the audio
     juce::TextButton renderAudioButton { "Render Audio" };
     void renderAudioButtonClicked();
+    // load the preset
+    juce::TextButton loadPresetButton { "Load Preset" };
+    void loadPresetButtonClicked();
     // save the preset
     juce::TextButton savePresetButton { "Save Preset" };
     void savePresetButtonClicked();

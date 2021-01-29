@@ -58,6 +58,8 @@ void Interface::resized()
                                                 buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
                                                    buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> loadPresetButtonArea (10, 265,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> savePresetButtonArea (10, 300,
                                                buttonSize.getWidth(), buttonSize.getHeight());
 
@@ -75,6 +77,7 @@ void Interface::resized()
     getRandomPatchButton.setBounds(getRandomPatchButtonArea);
     renderAudioButton.setBounds(renderAudioButtonArea);
     searchButton.setBounds(searchButtonArea);
+    loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
     tagInputBox.setBounds(inputBoxArea);
     synthNameLabel.setBounds(synthNameLabelArea);
@@ -98,6 +101,9 @@ void Interface::initializeComponents()
 
     searchButton.onClick = [this] {searchButtonClicked(); };
     addAndMakeVisible(searchButton);
+
+    loadPresetButton.onClick = [this] {loadPresetButtonClicked(); };
+    addAndMakeVisible(loadPresetButton);
 
     savePresetButton.onClick = [this] {savePresetButtonClicked(); };
     addAndMakeVisible(savePresetButton);
@@ -270,9 +276,22 @@ void Interface::searchButtonClicked()
     // TODO: send OSC to the python program to request the preset searching
 }
 
+void Interface::loadPresetButtonClicked()
+{
+    juce::FileChooser fileChooser("Select the path", {});
+    if (fileChooser.browseForFileToOpen())
+    {
+        processorManager.loadPreset(fileChooser.getResult().getFullPathName());
+    }
+}
+
 void Interface::savePresetButtonClicked()
 {
-
+    juce::FileChooser fileChooser("Select the path", {});
+    if (fileChooser.browseForFileToSave(true))
+    {
+        processorManager.savePreset(fileChooser.getResult().getFullPathName());
+    }
 }
 
 std::vector<juce::String> Interface::getTags() const
