@@ -241,9 +241,26 @@ void PluginManager::loadPreset(const juce::String &presetPath)
         return;
 
     juce::File inputFile(presetPath);
-    auto xmlState = juce::XmlDocument::parse(inputFile);
+    auto xmlPreset = juce::XmlDocument::parse(inputFile);
+
+    auto xmlParameters = xmlPreset->getChildByName("Parameters");
+    auto xmlMeta = xmlPreset->getChildByName("Meta");
+
+    this->presetPath = presetPath;
+
+    auto xmlDescriptors = xmlMeta->getChildByName("Descriptors");
+    juce::StringArray descriptorArray;
+    descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", ", "\"");
+    timbreDescriptors.clear();
+    for (auto &descriptor : descriptorArray)
+    {
+        if (descriptor.isEmpty())
+            continue;
+        timbreDescriptors.insert(descriptor);
+    }
+
     juce::MemoryBlock stateBlock;
-    juce::AudioProcessor::copyXmlToBinary(*xmlState, stateBlock);
+    juce::AudioProcessor::copyXmlToBinary(*xmlParameters, stateBlock);
 
     plugin->setStateInformation(stateBlock.getData(), stateBlock.getSize());
 }
@@ -262,8 +279,38 @@ void PluginManager::savePreset(const juce::String &presetPath)
         return;
     }
 
+    juce::XmlElement xmlPreset("IdeatorPreset");
+
+    // A deep copy of xmlState should be created.
+    // The new element will be automatically deleted by the parent, so there is no need to
+    // explicitly delete it.
+    auto xmlParameters = new juce::XmlElement(*xmlState);
+    xmlParameters->setTagName("Parameters");
+
+    // Meta
+    //   |- Descriptors
+    auto xmlMeta = new juce::XmlElement("Meta");
+
+    auto xmlDescriptors = new juce::XmlElement("Descriptors");
+    juce::String descriptorString;
+    bool isFirst = true;
+    for (auto &descriptor : timbreDescriptors)
+    {
+        if (!isFirst)
+            descriptorString.append(", ", 2);
+        else
+            isFirst = false;
+        descriptorString.append(descriptor, descriptor.length());
+    }
+    xmlDescriptors->addTextElement(descriptorString);
+
+    // construct the XML structure
+    xmlMeta->addChildElement(xmlDescriptors);
+    xmlPreset.addChildElement(xmlMeta);
+    xmlPreset.addChildElement(xmlParameters);
+
     juce::File outputFile(presetPath);
-    xmlState->writeTo(outputFile);
+    xmlPreset.writeTo(outputFile);
 }
 
 void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors)
