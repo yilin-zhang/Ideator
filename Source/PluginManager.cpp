@@ -51,9 +51,6 @@ bool PluginManager::loadPlugin(const juce::String& path)
     jassert (pluginDescriptions.size() > 0);
 
     juce::String errorMessage;
-
-    //if (plugin != nullptr) delete plugin;
-
     plugin = pluginFormatManager.createPluginInstance (*pluginDescriptions[0],
                                                        initialSampleRate,
                                                        initialBufferSize,
@@ -71,8 +68,6 @@ bool PluginManager::loadPlugin(const juce::String& path)
         // all the values to 0.0f!
         //fillAvailablePluginParameters (pluginParameters);
 
-        std::cout << "Plugin loaded!" << std::endl;
-
         // notify the host once any parameter has changed
         plugin->addListener(this);
 
@@ -80,12 +75,12 @@ bool PluginManager::loadPlugin(const juce::String& path)
         presetPath = "";
         timbreDescriptors.clear();
 
+        DBG("Loaded a plugin: " << pluginPath);
+
         return true;
     }
 
-    std::cout << "PluginManager::loadPlugin error: "
-              << errorMessage.toStdString()
-              << std::endl;
+    DBG("PluginManager::loadPlugin error: " << errorMessage.toStdString());
 
     return false;
 }
@@ -111,9 +106,7 @@ bool PluginManager::checkPluginLoaded() const
 void PluginManager::addMidiEvent(const juce::MidiMessage &midiMessage)
 {
     // NOTE: I hard coded sampleNumber 0 here
-    //midiBuffer.addEvent(midiMessage, midiMessage.getTimeStamp());
     midiBuffer.addEvent(midiMessage, 0);
-    //std::cout << "num events: " << midiBuffer.getNumEvents() << std::endl;
 }
 
 juce::PluginDescription PluginManager::getPluginDescription() const
@@ -249,15 +242,13 @@ void PluginManager::loadPreset(const juce::String &presetPath)
     auto xmlPluginPath = xmlMeta->getChildByName("PluginPath");
     auto newPluginPath = xmlPluginPath->getAllSubText();
     if (pluginPath != newPluginPath)
-    {
         loadPlugin(newPluginPath);
-    }
 
     // set plugin parameters
     auto xmlParameters = xmlPreset->getChildByName("Parameters");
     juce::MemoryBlock stateBlock;
     juce::AudioProcessor::copyXmlToBinary(*xmlParameters, stateBlock);
-    plugin->setStateInformation(stateBlock.getData(), stateBlock.getSize());
+    plugin->setStateInformation(stateBlock.getData(), static_cast<int>(stateBlock.getSize()));
 
     // set meta data
     this->presetPath = presetPath;
@@ -281,7 +272,8 @@ void PluginManager::savePreset(const juce::String &presetPath)
 
     juce::MemoryBlock stateBlock;
     plugin->getStateInformation(stateBlock);
-    auto xmlState = juce::AudioProcessor::getXmlFromBinary(stateBlock.getData(), stateBlock.getSize());
+    auto xmlState = juce::AudioProcessor::getXmlFromBinary(stateBlock.getData(),
+                                                           static_cast<int>(stateBlock.getSize()));
     if (!xmlState)
     {
         DBG("Data is unsuitable or corrupted.");
@@ -297,6 +289,7 @@ void PluginManager::savePreset(const juce::String &presetPath)
     xmlParameters->setTagName("Parameters");
 
     // Meta
+    //   |- PluginPath
     //   |- Descriptors
     auto xmlMeta = new juce::XmlElement("Meta");
     auto xmlPluginPath = new juce::XmlElement("PluginPath");

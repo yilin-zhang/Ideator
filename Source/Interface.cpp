@@ -235,7 +235,7 @@ void Interface::getRandomPatchButtonClicked()
 
     auto parameters = processorManager.getPluginParameters();
     int numParameters = parameters.size();
-    std::cout << "The plugin has: " << numParameters << " parameters" << std::endl;
+    DBG("The plugin has: " << numParameters << " parameters");
 
     // NOTE: Is it OK to do like this? what if the second command arrives before the first one?
     // inform the python program how many parameters it has to generate
