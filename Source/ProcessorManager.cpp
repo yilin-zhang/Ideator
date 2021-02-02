@@ -87,6 +87,11 @@ bool ProcessorManager::saveAudio(juce::String &audioPath)
     return audioProcessor.saveAudio(audioPath);
 }
 
+void ProcessorManager::sendAudio()
+{
+    audioProcessor.sendAudio();
+}
+
 void ProcessorManager::loadPreset(const juce::String &presetPath)
 {
     audioProcessor.loadPreset(presetPath);

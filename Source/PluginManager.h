@@ -28,6 +28,7 @@ public:
     void setPluginParameter(int parameterIndex, float newValue) override;
     void renderAudio() override;
     bool saveAudio(juce::String &audioPath) override;
+    void sendAudio() override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
@@ -57,4 +58,11 @@ private:
     void resetWhenParameterChanged();
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
     void audioProcessorChanged (juce::AudioProcessor *processor) override;
+
+    struct AudioBufferToSend
+    {
+        int numChannels;
+        int numSamples;
+        const float ** arrayOfReadPointers;
+    } audioBufferToSend;
 };

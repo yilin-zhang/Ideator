@@ -238,6 +238,16 @@ bool PluginManager::saveAudio(juce::String &audioPath)
     return true;
 }
 
+void PluginManager::sendAudio()
+{
+    juce::DatagramSocket socket;
+    audioBufferToSend.numSamples = presetAudio.getNumSamples();
+    audioBufferToSend.numChannels = presetAudio.getNumChannels();
+    audioBufferToSend.arrayOfReadPointers = presetAudio.getArrayOfReadPointers();
+
+    socket.write(LOCAL_ADDRESS, UDP_SEND_PORT, &audioBufferToSend, sizeof(audioBufferToSend));
+}
+
 void PluginManager::loadPreset(const juce::String &presetPath)
 {
     // We do not check if a plugin has been loaded here, because the function will

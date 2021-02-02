@@ -42,6 +42,7 @@ public:
     void setPluginParameter(int parameterIndex, float newValue) override;
     void renderAudio() override;
     bool saveAudio(juce::String &audioPath) override;
+    void sendAudio() override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
