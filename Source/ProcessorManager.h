@@ -43,8 +43,8 @@ public:
     bool renderAudio(juce::String &audioPath) override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
-    void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
-    const std::unordered_set<juce::String>& getTimbreDesctiptors() const override;
+    void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
+    const std::unordered_set<juce::String>& getTimbreDescriptors() const override;
     void setPresetPath(const juce::String &path) override;
     const juce::String& getPresetPath() const override;
 

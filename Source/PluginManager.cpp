@@ -318,7 +318,7 @@ void PluginManager::savePreset(const juce::String &presetPath)
     xmlPreset.writeTo(outputFile);
 }
 
-void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors)
+void PluginManager::setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors)
 {
     if (!plugin)
         return;
@@ -326,7 +326,7 @@ void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> 
     this->timbreDescriptors = timbreDescriptors;
 }
 
-const std::unordered_set<juce::String>& PluginManager::getTimbreDesctiptors() const
+const std::unordered_set<juce::String>& PluginManager::getTimbreDescriptors() const
 {
     return timbreDescriptors;
 }
