@@ -12,7 +12,8 @@
 #include <JuceHeader.h>
 #include "PluginManagerIf.h"
 
-class PluginManager : public PluginManagerIf
+class PluginManager : public PluginManagerIf,
+                      private juce::AudioProcessorListener
 {
 public:
     PluginManager();
@@ -28,6 +29,10 @@ public:
     bool renderAudio(juce::String &audioPath) override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
+    void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
+    std::unordered_set<juce::String> getTimbreDesctiptors() override;
+    void setPresetPath(const juce::String &path) override;
+    juce::String getPresetPath() override;
 
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
@@ -40,4 +45,11 @@ protected:
     double internSampleRate;
     int internSamplesPerBlock;
 
+    // extra states
+    std::unordered_set<juce::String> timbreDescriptors;
+    juce::String presetPath; // empty string means the preset has not been saved
+
+private:
+    void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
+    void audioProcessorChanged (juce::AudioProcessor *processor) override;
 };

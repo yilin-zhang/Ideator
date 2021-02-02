@@ -43,6 +43,7 @@ public:
     bool renderAudio(juce::String &audioPath) override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
+    void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
 
 private:
 #ifdef IDEATOR_APP

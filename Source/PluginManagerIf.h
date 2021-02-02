@@ -10,6 +10,7 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include <unordered_set>
 
 class PluginManagerIf
 {
@@ -25,5 +26,9 @@ public:
     virtual bool renderAudio(juce::String &audioPath) = 0;
     virtual void loadPreset(const juce::String &presetPath) = 0;
     virtual void savePreset(const juce::String &presetPath) = 0;
+    virtual void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) = 0;
+    virtual std::unordered_set<juce::String> getTimbreDesctiptors() = 0;
+    virtual void setPresetPath(const juce::String &path) = 0;
+    virtual juce::String getPresetPath() = 0;
 };
 

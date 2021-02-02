@@ -73,6 +73,9 @@ bool PluginManager::loadPlugin(const juce::String& path)
 
         std::cout << "Plugin loaded!" << std::endl;
 
+        // notify the host once any parameter has changed
+        plugin->addListener(this);
+
         return true;
     }
 
@@ -258,4 +261,42 @@ void PluginManager::savePreset(const juce::String &presetPath)
 
     juce::File outputFile(presetPath);
     xmlState->writeTo(outputFile);
+}
+
+void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors)
+{
+    this->timbreDescriptors = timbreDescriptors;
+}
+
+std::unordered_set<juce::String> PluginManager::getTimbreDesctiptors()
+{
+    return timbreDescriptors;
+}
+
+void PluginManager::setPresetPath(const juce::String &path)
+{
+    presetPath = path;
+}
+
+juce::String PluginManager::getPresetPath()
+{
+    return presetPath;
+}
+
+// ==================================================
+// AudioProcessorListener
+// ==================================================
+
+void PluginManager::audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue)
+{
+    // the empty path indicates that the patch has not been saved
+    if (presetPath != "")
+        presetPath = "";
+
+    DBG("A parameter has been changed.");
+}
+
+void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
+{
+    // empty
 }
