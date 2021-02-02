@@ -76,6 +76,9 @@ bool PluginManager::loadPlugin(const juce::String& path)
         // notify the host once any parameter has changed
         plugin->addListener(this);
 
+        presetPath = "";
+        timbreDescriptors.clear();
+
         return true;
     }
 
@@ -265,6 +268,9 @@ void PluginManager::savePreset(const juce::String &presetPath)
 
 void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors)
 {
+    if (!plugin)
+        return;
+
     this->timbreDescriptors = timbreDescriptors;
 }
 
@@ -275,6 +281,9 @@ std::unordered_set<juce::String> PluginManager::getTimbreDesctiptors()
 
 void PluginManager::setPresetPath(const juce::String &path)
 {
+    if (!plugin)
+        return;
+
     presetPath = path;
 }
 
