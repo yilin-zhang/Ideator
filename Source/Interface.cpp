@@ -65,6 +65,8 @@ void Interface::resized()
 
     juce::Rectangle<int> synthNameLabelArea (10, 150,
                                              buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> timbreLabelArea (10, 185,
+                                          buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> inputBoxArea (160,10,200, 30);
     juce::Rectangle<int> presetListArea (160,45,200, 300);
     juce::Rectangle<int> searchButtonArea (370,10,70, 30);
@@ -81,6 +83,7 @@ void Interface::resized()
     savePresetButton.setBounds(savePresetButtonArea);
     tagInputBox.setBounds(inputBoxArea);
     synthNameLabel.setBounds(synthNameLabelArea);
+    timbreLabel.setBounds(timbreLabelArea);
     presetList.setBounds(presetListArea);
     midiKeyboard.setBounds(keyboardArea);
 }

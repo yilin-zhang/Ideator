@@ -69,6 +69,8 @@ private:
     void searchButtonClicked();
     // plugin name
     juce::Label synthNameLabel;
+    // timbre descriptors
+    juce::Label timbreLabel;
     // preset list
     juce::ListBox presetList;
     // generated tags
