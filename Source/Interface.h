@@ -52,8 +52,8 @@ private:
     juce::TextButton getRandomPatchButton   { "Random Patch" };
     void getRandomPatchButtonClicked();
     // render the audio
-    juce::TextButton renderAudioButton { "Render Audio" };
-    void renderAudioButtonClicked();
+    juce::TextButton saveAudioButton {"Save Audio" };
+    void saveAudioButtonClicked();
     // load the preset
     juce::TextButton loadPresetButton { "Load Preset" };
     void loadPresetButtonClicked();

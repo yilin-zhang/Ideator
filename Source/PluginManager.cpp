@@ -20,6 +20,7 @@ PluginManager::PluginManager():
         internSampleRate(initialSampleRate),
         internSamplesPerBlock(initialBufferSize)
 {
+    presetAudio.clear();
 }
 
 PluginManager::~PluginManager()= default;
@@ -72,8 +73,7 @@ bool PluginManager::loadPlugin(const juce::String& path)
         plugin->addListener(this);
 
         pluginPath = path;
-        presetPath = "";
-        timbreDescriptors.clear();
+        resetWhenParameterChanged();
 
         DBG("Loaded a plugin: " << pluginPath);
 
@@ -129,10 +129,10 @@ void PluginManager::setPluginParameter(int parameterIndex, float newValue)
         param->setValue (newValue);
 }
 
-bool PluginManager::renderAudio(juce::String &audioPath)
+void PluginManager::renderAudio()
 {
     if (!plugin)
-        return false;
+        return;
 
     // initialize constants
     const double audioLength = 3.; // 3 seconds of audio
@@ -140,15 +140,14 @@ bool PluginManager::renderAudio(juce::String &audioPath)
     const int numSamples = static_cast<int>(internSampleRate) * static_cast<int>(audioLength);
     const int numNoteSamples = static_cast<int>(internSampleRate) * static_cast<int>(noteLength);
     const int blockSize = internSamplesPerBlock;
-    const int numChannels = plugin->getTotalNumOutputChannels();
+    const int numChannels = plugin->getTotalNumOutputChannels(); // NOTE: The VST3 version of Helm returns 0 (don't know why)
     const int midiNote = 60;
     const uint8_t midiVelocity = 127;
 
     // initialize audio buffers
     juce::AudioBuffer<float> bufferToProcess(numChannels, blockSize);
-    juce::AudioBuffer<float> bufferToSave(numChannels, numSamples);
+    presetAudio.setSize(numChannels, numSamples);
 
-//    bufferToSave.clear();
     // create midi on and off messages
     // The timestamp indicates the number of audio samples from the start of the midi buffer.
     juce::MidiMessage onMessage;
@@ -158,8 +157,8 @@ bool PluginManager::renderAudio(juce::String &audioPath)
     onMessage.setTimeStamp(0);
     juce::MidiMessage offMessage;
     offMessage = juce::MidiMessage::noteOff(1,
-                                          midiNote,
-                                          midiVelocity);
+                                            midiNote,
+                                            midiVelocity);
 
     // add on message to the buffer
     juce::MidiBuffer midiNoteBuffer;
@@ -188,16 +187,26 @@ bool PluginManager::renderAudio(juce::String &audioPath)
                            numSamples - currentSample : blockSize;
 
         for (int i=0; i<numChannels; ++i)
-            bufferToSave.copyFrom(
-                    i,
-                    currentSample,
-                    bufferToProcess,
-                    i,
-                    0,
-                    numSamplesToCopy);
+            presetAudio.copyFrom(i,
+                                 currentSample,
+                                 bufferToProcess,
+                                 i,
+                                 0,
+                                 numSamplesToCopy);
     }
+}
 
-    // save the bufferToSave to wav
+bool PluginManager::saveAudio(juce::String &audioPath)
+{
+    if (!plugin)
+        return false;
+
+    // A cleared presetAudio buffer means the patch has been changed, so we should update
+    // the buffer, otherwise there is no need to update.
+    if (presetAudio.hasBeenCleared())
+        renderAudio();
+
+    // save the presetAudio buffer to wav
     // get time stamp
     time_t now = time(nullptr);
     std::stringstream timeStringStream;
@@ -215,12 +224,12 @@ bool PluginManager::renderAudio(juce::String &audioPath)
 
     writer.reset (format.createWriterFor (new juce::FileOutputStream (wavFile),
                                           internSampleRate,
-                                          bufferToSave.getNumChannels(),
+                                          presetAudio.getNumChannels(),
                                           24,
                                           {},
                                           0));
     if (writer != nullptr)
-        writer->writeFromAudioSampleBuffer (bufferToSave, 0, bufferToSave.getNumSamples());
+        writer->writeFromAudioSampleBuffer (presetAudio, 0, presetAudio.getNumSamples());
 
     // set the plugin state back to realtime mode
     plugin->setNonRealtime(false);
@@ -349,16 +358,33 @@ const juce::String& PluginManager::getPresetPath() const
 // AudioProcessorListener
 // ==================================================
 
-void PluginManager::audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue)
+void PluginManager::resetWhenParameterChanged()
 {
+    // This function should also be called when a new plugin has been loaded
+
     // the empty path indicates that the patch has not been saved
     if (presetPath != "")
         presetPath = "";
 
+    if (!timbreDescriptors.empty())
+        timbreDescriptors.clear();
+
+    // Any parameter change might lead to preset audio change, so we should clear it out
+    if (!presetAudio.hasBeenCleared())
+        presetAudio.clear();
+
+}
+
+void PluginManager::audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue)
+{
+    // This function will be called whenever a parameter is directly changed
+    resetWhenParameterChanged();
     DBG("A parameter has been changed.");
 }
 
 void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
 {
-    // empty
+    // This function will be called when the Diva patch has been set to a new preset.
+    resetWhenParameterChanged();
+    DBG("The patch has been changed.");
 }

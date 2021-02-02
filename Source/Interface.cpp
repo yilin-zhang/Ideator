@@ -54,8 +54,8 @@ void Interface::resized()
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> openPluginEditorButtonArea (10, 45,
                                                      buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> renderAudioButtonArea (10, 80,
-                                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> saveAudioButtonArea (10, 80,
+                                              buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
                                                    buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> loadPresetButtonArea (10, 265,
@@ -77,7 +77,7 @@ void Interface::resized()
     loadPluginButton.setBounds(loadPluginButtonArea);
     openPluginEditorButton.setBounds(openPluginEditorButtonArea);
     getRandomPatchButton.setBounds(getRandomPatchButtonArea);
-    renderAudioButton.setBounds(renderAudioButtonArea);
+    saveAudioButton.setBounds(saveAudioButtonArea);
     searchButton.setBounds(searchButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
@@ -99,8 +99,8 @@ void Interface::initializeComponents()
     getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
     addAndMakeVisible(getRandomPatchButton);
 
-    renderAudioButton.onClick = [this] {renderAudioButtonClicked(); };
-    addAndMakeVisible(renderAudioButton);
+    saveAudioButton.onClick = [this] { saveAudioButtonClicked(); };
+    addAndMakeVisible(saveAudioButton);
 
     searchButton.onClick = [this] {searchButtonClicked(); };
     addAndMakeVisible(searchButton);
@@ -254,7 +254,7 @@ void Interface::getRandomPatchButtonClicked()
     // }
 }
 
-void Interface::renderAudioButtonClicked()
+void Interface::saveAudioButtonClicked()
 {
     // check if the plugin has been loaded
     if (!processorManager.checkPluginLoaded())
@@ -265,12 +265,12 @@ void Interface::renderAudioButtonClicked()
 
     // get the audio path
     juce::String audioPath;
-    bool renderSucceeded = processorManager.renderAudio(audioPath);
-    if (!renderSucceeded)
+    bool saveSucceeded = processorManager.saveAudio(audioPath);
+    if (!saveSucceeded)
         return;
 
     // inform the python program to fetch the data
-    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "render_audio/" + audioPath, 1);
+    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "save_audio/" + audioPath, 1);
     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
 }
 

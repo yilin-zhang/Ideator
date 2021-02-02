@@ -40,7 +40,8 @@ public:
     juce::PluginDescription getPluginDescription() const override;
     const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const override;
     void setPluginParameter(int parameterIndex, float newValue) override;
-    bool renderAudio(juce::String &audioPath) override;
+    void renderAudio() override;
+    bool saveAudio(juce::String &audioPath) override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;

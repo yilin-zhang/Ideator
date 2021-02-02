@@ -26,7 +26,8 @@ public:
     juce::PluginDescription getPluginDescription() const override;
     const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const override;
     void setPluginParameter(int parameterIndex, float newValue) override;
-    bool renderAudio(juce::String &audioPath) override;
+    void renderAudio() override;
+    bool saveAudio(juce::String &audioPath) override;
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
@@ -45,12 +46,15 @@ protected:
     double internSampleRate;
     int internSamplesPerBlock;
 
+    juce::AudioBuffer<float> presetAudio; // audio buffer for saving the rendered audio
+
     // extra states
     std::unordered_set<juce::String> timbreDescriptors;
     juce::String presetPath; // empty string means the preset has not been saved
     juce::String pluginPath;
 
 private:
+    void resetWhenParameterChanged();
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
     void audioProcessorChanged (juce::AudioProcessor *processor) override;
 };
