@@ -315,6 +315,7 @@ void PluginManager::savePreset(const juce::String &presetPath)
     xmlPreset.addChildElement(xmlParameters);
 
     juce::File outputFile(presetPath);
+    outputFile.create();
     xmlPreset.writeTo(outputFile);
 }
 
