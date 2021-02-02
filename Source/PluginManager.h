@@ -48,6 +48,7 @@ protected:
     // extra states
     std::unordered_set<juce::String> timbreDescriptors;
     juce::String presetPath; // empty string means the preset has not been saved
+    juce::String pluginPath;
 
 private:
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;

@@ -285,6 +285,12 @@ void Interface::loadPresetButtonClicked()
     if (fileChooser.browseForFileToOpen())
     {
         processorManager.loadPreset(fileChooser.getResult().getFullPathName());
+
+        // The plugin path is written inside the preset and the program will
+        // load the plugin according to it. Therefore, we should update the plugin name here.
+        // It is the same as we do in loadPluginButtonClicked.
+        synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
+                               juce::NotificationType::sendNotification);
     }
 }
 

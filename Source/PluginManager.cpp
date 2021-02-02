@@ -76,6 +76,7 @@ bool PluginManager::loadPlugin(const juce::String& path)
         // notify the host once any parameter has changed
         plugin->addListener(this);
 
+        pluginPath = path;
         presetPath = "";
         timbreDescriptors.clear();
 
@@ -237,17 +238,29 @@ bool PluginManager::renderAudio(juce::String &audioPath)
 
 void PluginManager::loadPreset(const juce::String &presetPath)
 {
-    if (!plugin)
-        return;
+    // We do not check if a plugin has been loaded here, because the function will
+    // load the plugin if it is not loaded.
 
     juce::File inputFile(presetPath);
     auto xmlPreset = juce::XmlDocument::parse(inputFile);
 
-    auto xmlParameters = xmlPreset->getChildByName("Parameters");
+    // check the plugin path first, just return if it is invalid
     auto xmlMeta = xmlPreset->getChildByName("Meta");
+    auto xmlPluginPath = xmlMeta->getChildByName("PluginPath");
+    auto newPluginPath = xmlPluginPath->getAllSubText();
+    if (pluginPath != newPluginPath)
+    {
+        loadPlugin(newPluginPath);
+    }
 
+    // set plugin parameters
+    auto xmlParameters = xmlPreset->getChildByName("Parameters");
+    juce::MemoryBlock stateBlock;
+    juce::AudioProcessor::copyXmlToBinary(*xmlParameters, stateBlock);
+    plugin->setStateInformation(stateBlock.getData(), stateBlock.getSize());
+
+    // set meta data
     this->presetPath = presetPath;
-
     auto xmlDescriptors = xmlMeta->getChildByName("Descriptors");
     juce::StringArray descriptorArray;
     descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", ", "\"");
@@ -259,10 +272,6 @@ void PluginManager::loadPreset(const juce::String &presetPath)
         timbreDescriptors.insert(descriptor);
     }
 
-    juce::MemoryBlock stateBlock;
-    juce::AudioProcessor::copyXmlToBinary(*xmlParameters, stateBlock);
-
-    plugin->setStateInformation(stateBlock.getData(), stateBlock.getSize());
 }
 
 void PluginManager::savePreset(const juce::String &presetPath)
@@ -290,6 +299,8 @@ void PluginManager::savePreset(const juce::String &presetPath)
     // Meta
     //   |- Descriptors
     auto xmlMeta = new juce::XmlElement("Meta");
+    auto xmlPluginPath = new juce::XmlElement("PluginPath");
+    xmlPluginPath->addTextElement(pluginPath);
 
     auto xmlDescriptors = new juce::XmlElement("Descriptors");
     juce::String descriptorString;
@@ -305,6 +316,7 @@ void PluginManager::savePreset(const juce::String &presetPath)
     xmlDescriptors->addTextElement(descriptorString);
 
     // construct the XML structure
+    xmlMeta->addChildElement(xmlPluginPath);
     xmlMeta->addChildElement(xmlDescriptors);
     xmlPreset.addChildElement(xmlMeta);
     xmlPreset.addChildElement(xmlParameters);
