@@ -326,7 +326,7 @@ void PluginManager::setTimbreDesctiptors(const std::unordered_set<juce::String> 
     this->timbreDescriptors = timbreDescriptors;
 }
 
-std::unordered_set<juce::String> PluginManager::getTimbreDesctiptors()
+const std::unordered_set<juce::String>& PluginManager::getTimbreDesctiptors() const
 {
     return timbreDescriptors;
 }
@@ -339,7 +339,7 @@ void PluginManager::setPresetPath(const juce::String &path)
     presetPath = path;
 }
 
-juce::String PluginManager::getPresetPath()
+const juce::String& PluginManager::getPresetPath() const
 {
     return presetPath;
 }

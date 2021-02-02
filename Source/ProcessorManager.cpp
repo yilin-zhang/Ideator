@@ -97,7 +97,7 @@ void ProcessorManager::setTimbreDesctiptors(const std::unordered_set<juce::Strin
     audioProcessor.setTimbreDesctiptors(timbreDescriptors);
 }
 
-std::unordered_set<juce::String> ProcessorManager::getTimbreDesctiptors()
+const std::unordered_set<juce::String>& ProcessorManager::getTimbreDesctiptors() const
 {
     return audioProcessor.getTimbreDesctiptors();
 }
@@ -107,7 +107,7 @@ void ProcessorManager::setPresetPath(const juce::String &path)
     audioProcessor.setPresetPath(path);
 }
 
-juce::String ProcessorManager::getPresetPath()
+const juce::String& ProcessorManager::getPresetPath() const
 {
     return audioProcessor.getPresetPath();
 }

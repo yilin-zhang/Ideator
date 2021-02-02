@@ -27,8 +27,8 @@ public:
     virtual void loadPreset(const juce::String &presetPath) = 0;
     virtual void savePreset(const juce::String &presetPath) = 0;
     virtual void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) = 0;
-    virtual std::unordered_set<juce::String> getTimbreDesctiptors() = 0;
+    virtual const std::unordered_set<juce::String>& getTimbreDesctiptors() const = 0;
     virtual void setPresetPath(const juce::String &path) = 0;
-    virtual juce::String getPresetPath() = 0;
+    virtual const juce::String& getPresetPath() const = 0;
 };
 

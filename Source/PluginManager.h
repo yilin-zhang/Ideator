@@ -30,9 +30,9 @@ public:
     void loadPreset(const juce::String &presetPath) override;
     void savePreset(const juce::String &presetPath) override;
     void setTimbreDesctiptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
-    std::unordered_set<juce::String> getTimbreDesctiptors() override;
+    const std::unordered_set<juce::String>& getTimbreDesctiptors() const override;
     void setPresetPath(const juce::String &path) override;
-    juce::String getPresetPath() override;
+    const juce::String& getPresetPath() const override;
 
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
