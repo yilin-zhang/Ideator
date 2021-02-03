@@ -75,7 +75,7 @@ public:
         // set meta data
         auto xmlDescriptors = xmlMeta->getChildByName("Descriptors");
         juce::StringArray descriptorArray;
-        descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", ", "\"");
+        descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", &", "\"");
         descriptors.clear();
         for (auto &descriptor : descriptorArray)
         {
