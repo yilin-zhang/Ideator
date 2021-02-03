@@ -13,6 +13,24 @@
 #include "ProcessorManager.h"
 #include "PluginWindow.h"
 
+class PresetTableModel : public juce::Component,
+                         public juce::TableListBoxModel
+{
+public:
+    explicit PresetTableModel(ProcessorManager &processorManager);
+    int getNumRows() override;
+    void paintRowBackground (juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected) override;
+    void paintCell (juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
+    void cellClicked (int rowNumber, int columnId, const juce::MouseEvent &) override;
+    void resized() override;
+    void addItem(const juce::String &path, const std::unordered_set<juce::String> &descriptors);
+private:
+    juce::TableListBox presetTable;
+    juce::Array<juce::String> paths;
+    juce::Array<std::unordered_set<juce::String>> descriptors;
+    ProcessorManager& processorManager;
+};
+
 class Interface : public juce::Component,
                   private juce::ChangeListener,
                   private juce::Label::Listener,
@@ -60,6 +78,9 @@ private:
     // save the preset
     juce::TextButton savePresetButton { "Save Preset" };
     void savePresetButtonClicked();
+    // set preset library path
+    juce::TextButton setLibraryButton { "Set Library" };
+    void setLibraryButtonClicked();
     // input box
     juce::Value tagInputValue;
     juce::TextEditor tagInputBox {"tagInput"};
@@ -69,11 +90,15 @@ private:
     void searchButtonClicked();
     // plugin name
     juce::Label synthNameLabel;
+    // status label
+    juce::Label statusLabel;
     // timbre descriptors
     juce::Label timbreLabel;
     // preset list
-    juce::ListBox presetList;
-    // generated tags
+    PresetTableModel presetList;
+
+    // TODO: maybe put this into another class
+    juce::String libraryPath; // the path to the preset library
 
     /// MIDI keyboard
     // keyboardState is an argument when initializing midiKeyboard

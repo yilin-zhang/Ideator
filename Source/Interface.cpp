@@ -10,9 +10,93 @@
 
 #include "Interface.h"
 #include "Config.h"
+#include "Utils.h"
+
+// ================================================
+// PresetTableModel
+// ================================================
+
+PresetTableModel::PresetTableModel(ProcessorManager& pm) : processorManager(pm)
+{
+    presetTable.setModel(this);
+    presetTable.getHeader().addColumn("Path", 0, 80);
+    presetTable.getHeader().addColumn("Descriptors", 1, 80);
+    presetTable.setColour(juce::ListBox::backgroundColourId, juce::Colour::greyLevel(0.2f));
+    presetTable.setRowHeight(30);
+    addAndMakeVisible(presetTable);
+}
+
+int PresetTableModel::getNumRows()
+{
+    return paths.size();
+}
+
+void PresetTableModel::paintRowBackground (juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
+{
+    // make sure the rowNumber is in the range
+    if(!juce::isPositiveAndBelow(rowNumber, getNumRows())) return;
+
+    g.fillAll(juce::Colour::greyLevel(rowIsSelected ? 0.15f : 0.05f));
+    g.setFont(18);
+    g.setColour(juce::Colours::whitesmoke);
+    //g.drawFittedText(paths[rowNumber], {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
+}
+
+void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
+{
+    if(!juce::isPositiveAndBelow(rowNumber, getNumRows())) return;
+
+    g.fillAll(juce::Colour::greyLevel(rowIsSelected ? 0.45f : 0.05f));
+    g.setFont(18);
+    g.setColour(juce::Colours::whitesmoke);
+    if (columnId == 0)
+        g.drawFittedText(paths[rowNumber], {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
+    else
+    {
+        juce::String descriptorString;
+        auto descriptorOfThisRow = descriptors[rowNumber];
+        auto descriptorIter = descriptorOfThisRow.begin();
+        for (int i=0; i<descriptors[rowNumber].size(); ++i)
+        {
+            juce::String descriptor = *descriptorIter;
+            if (i == 0)
+                descriptorString << descriptor;
+            else
+                descriptorString << ", " << descriptor;
+            ++descriptorIter;
+        }
+
+        g.drawFittedText(descriptorString, {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
+    }
+
+}
+
+void PresetTableModel::cellClicked (int rowNumber, int columnId, const juce::MouseEvent &)
+{
+    juce::String presetPath = paths[rowNumber];
+    processorManager.loadPreset(presetPath);
+}
+
+void PresetTableModel::resized()
+{
+    presetTable.setBounds(getLocalBounds());
+}
+
+void PresetTableModel::addItem(const juce::String &path, const std::unordered_set<juce::String> &descriptors)
+{
+    this->descriptors.add(descriptors);
+    this->paths.add(path);
+    presetTable.updateContent();
+    presetTable.selectRow(getNumRows() - 1);
+}
+
+// ================================================
+// Interface
+// ================================================
 
 Interface::Interface(ProcessorManager& pm) :
         processorManager(pm),
+        presetList(pm),
         midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     // Make sure you set the size of the component after
@@ -56,8 +140,10 @@ void Interface::resized()
                                                      buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> saveAudioButtonArea (10, 80,
                                               buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
-                                                   buttonSize.getWidth(), buttonSize.getHeight());
+    // juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
+    //                                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> setLibraryButtonArea (10, 115,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> loadPresetButtonArea (10, 265,
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> savePresetButtonArea (10, 300,
@@ -66,6 +152,8 @@ void Interface::resized()
     juce::Rectangle<int> synthNameLabelArea (10, 150,
                                              buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> timbreLabelArea (10, 185,
+                                          buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> statusLabelArea (10, 220,
                                           buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> inputBoxArea (160,10,200, 30);
     juce::Rectangle<int> presetListArea (160,45,200, 300);
@@ -76,7 +164,8 @@ void Interface::resized()
 
     loadPluginButton.setBounds(loadPluginButtonArea);
     openPluginEditorButton.setBounds(openPluginEditorButtonArea);
-    getRandomPatchButton.setBounds(getRandomPatchButtonArea);
+    // getRandomPatchButton.setBounds(getRandomPatchButtonArea);
+    setLibraryButton.setBounds(setLibraryButtonArea);
     saveAudioButton.setBounds(saveAudioButtonArea);
     searchButton.setBounds(searchButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
@@ -84,6 +173,7 @@ void Interface::resized()
     tagInputBox.setBounds(inputBoxArea);
     synthNameLabel.setBounds(synthNameLabelArea);
     timbreLabel.setBounds(timbreLabelArea);
+    statusLabel.setBounds(statusLabelArea);
     presetList.setBounds(presetListArea);
     midiKeyboard.setBounds(keyboardArea);
 }
@@ -96,8 +186,8 @@ void Interface::initializeComponents()
     openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
     addAndMakeVisible(openPluginEditorButton);
 
-    getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
-    addAndMakeVisible(getRandomPatchButton);
+    // getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
+    // addAndMakeVisible(getRandomPatchButton);
 
     saveAudioButton.onClick = [this] { saveAudioButtonClicked(); };
     addAndMakeVisible(saveAudioButton);
@@ -111,11 +201,17 @@ void Interface::initializeComponents()
     savePresetButton.onClick = [this] {savePresetButtonClicked(); };
     addAndMakeVisible(savePresetButton);
 
+    setLibraryButton.onClick = [this] {setLibraryButtonClicked(); };
+    addAndMakeVisible(setLibraryButton);
+
     addAndMakeVisible(tagInputBox);
     addAndMakeVisible(presetList);
 
     synthNameLabel.addListener(this);
     addAndMakeVisible(synthNameLabel);
+
+    synthNameLabel.addListener(this);
+    addAndMakeVisible(statusLabel);
 
     midiKeyboard.setName ("MIDI Keyboard");
     addAndMakeVisible(midiKeyboard);
@@ -291,6 +387,39 @@ void Interface::loadPresetButtonClicked()
         // It is the same as we do in loadPluginButtonClicked.
         synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
                                juce::NotificationType::sendNotification);
+    }
+}
+
+void Interface::setLibraryButtonClicked()
+{
+    juce::FileChooser fileChooser("Select the directory", {});
+    if (fileChooser.browseForDirectory())
+    {
+        libraryPath = fileChooser.getResult().getFullPathName();
+        statusLabel.setText("Library Path: " + libraryPath, juce::NotificationType::dontSendNotification);
+
+        // TODO: separate this part of code into another function later
+        // TODO: 1. check if the preset format is valid;
+        // scan all the presets in the directory and
+        juce::File libraryDir(libraryPath);
+        auto presetFiles = libraryDir.findChildFiles(juce::File::TypesOfFileToFind::findFiles,
+                                                     true,
+                                                     "*.xml");
+        for (auto &file : presetFiles)
+        {
+            auto presetPath = file.getFullPathName();
+            auto xmlPreset = juce::XmlDocument::parse(file);
+            if (!xmlPreset)
+                return;
+
+            juce::XmlElement xmlState("Parameters");
+            juce::String pluginPath;
+            std::unordered_set<juce::String> descriptors;
+            auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, pluginPath, descriptors);
+            if (!isSuccessful)
+                continue;
+            presetList.addItem(presetPath, descriptors);
+        }
     }
 }
 
