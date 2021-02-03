@@ -10,6 +10,7 @@
 
 #include "PluginManager.h"
 #include "Config.h"
+#include "Utils.h"
 #include <sstream>
 #include <ctime>
 
@@ -252,35 +253,31 @@ void PluginManager::loadPreset(const juce::String &presetPath)
 {
     // We do not check if a plugin has been loaded here, because the function will
     // load the plugin if it is not loaded.
-
     juce::File inputFile(presetPath);
     auto xmlPreset = juce::XmlDocument::parse(inputFile);
+    if (!xmlPreset)
+        return;
+
+    // parse the preset
+    juce::XmlElement xmlState("Parameters");
+    juce::String newPluginPath;
+    std::unordered_set<juce::String> descriptors;
+    auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, newPluginPath, descriptors);
+    if (!isSuccessful)
+        return;
 
     // check the plugin path first, just return if it is invalid
-    auto xmlMeta = xmlPreset->getChildByName("Meta");
-    auto xmlPluginPath = xmlMeta->getChildByName("PluginPath");
-    auto newPluginPath = xmlPluginPath->getAllSubText();
     if (pluginPath != newPluginPath)
         loadPlugin(newPluginPath);
 
     // set plugin parameters
-    auto xmlParameters = xmlPreset->getChildByName("Parameters");
     juce::MemoryBlock stateBlock;
-    juce::AudioProcessor::copyXmlToBinary(*xmlParameters, stateBlock);
+    juce::AudioProcessor::copyXmlToBinary(xmlState, stateBlock);
     plugin->setStateInformation(stateBlock.getData(), static_cast<int>(stateBlock.getSize()));
 
     // set meta data
     this->presetPath = presetPath;
-    auto xmlDescriptors = xmlMeta->getChildByName("Descriptors");
-    juce::StringArray descriptorArray;
-    descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", ", "\"");
-    timbreDescriptors.clear();
-    for (auto &descriptor : descriptorArray)
-    {
-        if (descriptor.isEmpty())
-            continue;
-        timbreDescriptors.insert(descriptor);
-    }
+    timbreDescriptors = descriptors;
 
 }
 
@@ -289,6 +286,7 @@ void PluginManager::savePreset(const juce::String &presetPath)
     if (!plugin)
         return;
 
+    // convert the binary state to XML
     juce::MemoryBlock stateBlock;
     plugin->getStateInformation(stateBlock);
     auto xmlState = juce::AudioProcessor::getXmlFromBinary(stateBlock.getData(),
@@ -299,39 +297,8 @@ void PluginManager::savePreset(const juce::String &presetPath)
         return;
     }
 
-    juce::XmlElement xmlPreset("IdeatorPreset");
-
-    // A deep copy of xmlState should be created.
-    // The new element will be automatically deleted by the parent, so there is no need to
-    // explicitly delete it.
-    auto xmlParameters = new juce::XmlElement(*xmlState);
-    xmlParameters->setTagName("Parameters");
-
-    // Meta
-    //   |- PluginPath
-    //   |- Descriptors
-    auto xmlMeta = new juce::XmlElement("Meta");
-    auto xmlPluginPath = new juce::XmlElement("PluginPath");
-    xmlPluginPath->addTextElement(pluginPath);
-
-    auto xmlDescriptors = new juce::XmlElement("Descriptors");
-    juce::String descriptorString;
-    bool isFirst = true;
-    for (auto &descriptor : timbreDescriptors)
-    {
-        if (!isFirst)
-            descriptorString.append(", ", 2);
-        else
-            isFirst = false;
-        descriptorString.append(descriptor, descriptor.length());
-    }
-    xmlDescriptors->addTextElement(descriptorString);
-
-    // construct the XML structure
-    xmlMeta->addChildElement(xmlPluginPath);
-    xmlMeta->addChildElement(xmlDescriptors);
-    xmlPreset.addChildElement(xmlMeta);
-    xmlPreset.addChildElement(xmlParameters);
+    // generate preset in XML format
+    juce::XmlElement xmlPreset = PresetManager::generate(*xmlState, pluginPath, timbreDescriptors);
 
     juce::File outputFile(presetPath);
     outputFile.create();

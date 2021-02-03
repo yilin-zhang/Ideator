@@ -4,6 +4,7 @@
               displaySplashScreen="1" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="khuyTv" name="Ideator-Plugin">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
+      <FILE id="MPRvvx" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
       <FILE id="uvKlm3" name="ProcessorManager.cpp" compile="1" resource="0"
             file="Source/ProcessorManager.cpp"/>
       <FILE id="fQCtJd" name="ProcessorManager.h" compile="0" resource="0"
