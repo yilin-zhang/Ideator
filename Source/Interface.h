@@ -25,6 +25,7 @@ public:
     void cellClicked (int rowNumber, int columnId, const juce::MouseEvent &) override;
     void resized() override;
     void addItem(const juce::String &pluginPath, const juce::String &presetPath, const std::unordered_set<juce::String> &descriptors);
+    void clear();
     const juce::String& getPluginPath() const;
     const juce::String& getPresetPath() const;
 private:

@@ -92,6 +92,16 @@ void PresetTableModel::addItem(const juce::String &pluginPath, const juce::Strin
     presetTable.selectRow(getNumRows() - 1);
 }
 
+void PresetTableModel::clear()
+{
+    pluginPaths.clear();
+    descriptors.clear();
+    presetPaths.clear();
+    presetTable.selectRow(0);
+    presetTable.updateContent();
+    sendChangeMessage();
+}
+
 const juce::String& PresetTableModel::getPluginPath() const
 {
     return currentPluginPath;
@@ -428,9 +438,8 @@ void Interface::setLibraryButtonClicked()
         libraryPath = fileChooser.getResult().getFullPathName();
         statusLabel.setText("Library Path: " + libraryPath, juce::NotificationType::dontSendNotification);
 
-        // TODO: separate this part of code into another function later
-        // TODO: 1. check if the preset format is valid;
-        // scan all the presets in the directory and
+        // scan all the presets in the directory and add them to presetList
+        presetList.clear();
         juce::File libraryDir(libraryPath);
         auto presetFiles = libraryDir.findChildFiles(juce::File::TypesOfFileToFind::findFiles,
                                                      true,
