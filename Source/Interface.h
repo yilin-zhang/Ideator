@@ -14,21 +14,26 @@
 #include "PluginWindow.h"
 
 class PresetTableModel : public juce::Component,
-                         public juce::TableListBoxModel
+                         public juce::TableListBoxModel,
+                         public juce::ChangeBroadcaster
 {
 public:
-    explicit PresetTableModel(ProcessorManager &processorManager);
+    explicit PresetTableModel();
     int getNumRows() override;
     void paintRowBackground (juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected) override;
     void paintCell (juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
     void cellClicked (int rowNumber, int columnId, const juce::MouseEvent &) override;
     void resized() override;
-    void addItem(const juce::String &path, const std::unordered_set<juce::String> &descriptors);
+    void addItem(const juce::String &pluginPath, const juce::String &presetPath, const std::unordered_set<juce::String> &descriptors);
+    const juce::String& getPluginPath() const;
+    const juce::String& getPresetPath() const;
 private:
     juce::TableListBox presetTable;
-    juce::Array<juce::String> paths;
+    juce::Array<juce::String> pluginPaths;
+    juce::Array<juce::String> presetPaths;
     juce::Array<std::unordered_set<juce::String>> descriptors;
-    ProcessorManager& processorManager;
+    juce::String currentPluginPath;
+    juce::String currentPresetPath;
 };
 
 class Interface : public juce::Component,
@@ -58,6 +63,9 @@ private:
     juce::OSCSender oscSender;
     void oscMessageReceived (const juce::OSCMessage& message) override;
     static void showConnectionErrorMessage (const juce::String& messageText);
+
+    // custom callbacks
+    void loadPluginCallback(const juce::String &path);
 
     /// functionalities
     // load plugin

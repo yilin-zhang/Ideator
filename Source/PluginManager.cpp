@@ -86,6 +86,11 @@ bool PluginManager::loadPlugin(const juce::String& path)
     return false;
 }
 
+const juce::String& PluginManager::getPresetPath() const
+{
+    return presetPath;
+}
+
 juce::AudioProcessorEditor* PluginManager::getPluginEditor()
 {
     if (plugin->hasEditor())
@@ -326,9 +331,9 @@ void PluginManager::setPresetPath(const juce::String &path)
     presetPath = path;
 }
 
-const juce::String& PluginManager::getPresetPath() const
+const juce::String& PluginManager::getPluginPath() const
 {
-    return presetPath;
+    return pluginPath;
 }
 
 // ==================================================

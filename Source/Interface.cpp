@@ -16,7 +16,7 @@
 // PresetTableModel
 // ================================================
 
-PresetTableModel::PresetTableModel(ProcessorManager& pm) : processorManager(pm)
+PresetTableModel::PresetTableModel()
 {
     presetTable.setModel(this);
     presetTable.getHeader().addColumn("Path", 0, 80);
@@ -28,7 +28,7 @@ PresetTableModel::PresetTableModel(ProcessorManager& pm) : processorManager(pm)
 
 int PresetTableModel::getNumRows()
 {
-    return paths.size();
+    return presetPaths.size();
 }
 
 void PresetTableModel::paintRowBackground (juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
@@ -39,7 +39,7 @@ void PresetTableModel::paintRowBackground (juce::Graphics &g, int rowNumber, int
     g.fillAll(juce::Colour::greyLevel(rowIsSelected ? 0.15f : 0.05f));
     g.setFont(18);
     g.setColour(juce::Colours::whitesmoke);
-    //g.drawFittedText(paths[rowNumber], {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
+    //g.drawFittedText(presetPaths[rowNumber], {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
 }
 
 void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
@@ -50,7 +50,7 @@ void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId
     g.setFont(18);
     g.setColour(juce::Colours::whitesmoke);
     if (columnId == 0)
-        g.drawFittedText(paths[rowNumber], {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
+        g.drawFittedText(presetPaths[rowNumber], {6, 0, width - 12, height}, juce::Justification::centredLeft, 1, 1.f);
     else
     {
         juce::String descriptorString;
@@ -73,8 +73,9 @@ void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId
 
 void PresetTableModel::cellClicked (int rowNumber, int columnId, const juce::MouseEvent &)
 {
-    juce::String presetPath = paths[rowNumber];
-    processorManager.loadPreset(presetPath);
+    currentPresetPath = presetPaths[rowNumber];
+    currentPluginPath = pluginPaths[rowNumber];
+    sendChangeMessage();
 }
 
 void PresetTableModel::resized()
@@ -82,12 +83,23 @@ void PresetTableModel::resized()
     presetTable.setBounds(getLocalBounds());
 }
 
-void PresetTableModel::addItem(const juce::String &path, const std::unordered_set<juce::String> &descriptors)
+void PresetTableModel::addItem(const juce::String &pluginPath, const juce::String &presetPath, const std::unordered_set<juce::String> &descriptors)
 {
+    this->pluginPaths.add(pluginPath);
     this->descriptors.add(descriptors);
-    this->paths.add(path);
+    this->presetPaths.add(presetPath);
     presetTable.updateContent();
     presetTable.selectRow(getNumRows() - 1);
+}
+
+const juce::String& PresetTableModel::getPluginPath() const
+{
+    return currentPluginPath;
+}
+
+const juce::String& PresetTableModel::getPresetPath() const
+{
+    return currentPresetPath;
 }
 
 // ================================================
@@ -96,7 +108,6 @@ void PresetTableModel::addItem(const juce::String &path, const std::unordered_se
 
 Interface::Interface(ProcessorManager& pm) :
         processorManager(pm),
-        presetList(pm),
         midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     // Make sure you set the size of the component after
@@ -113,6 +124,8 @@ Interface::Interface(ProcessorManager& pm) :
 
     addListener(this, OSC_RECEIVE_PATTERN + "set_parameter");
     oscSender.connect(LOCAL_ADDRESS, OSC_SEND_PORT);
+
+    presetList.addChangeListener(this);
 }
 
 Interface::~Interface()
@@ -222,6 +235,13 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (pluginWindow && (source == &pluginWindow->windowClosedBroadcaster))
         pluginWindow.deleteAndZero();
+
+    else if (source == &presetList)
+    {
+        if (presetList.getPluginPath() != processorManager.getPluginPath())
+            loadPluginCallback(presetList.getPluginPath());
+        processorManager.loadPreset(presetList.getPresetPath());
+    }
 }
 
 void Interface::labelTextChanged(juce::Label *labelThatHasChanged)
@@ -274,15 +294,7 @@ void Interface::loadPluginButtonClicked()
     if (fileChooser.browseForFileToOpen())
 #endif
     {
-        // If there is a opened plugin window, delete it.
-        // Must delete the window before loading a new plugin
-        // because the plugin editor is bounded to its plugin processor
-        if (pluginWindow)
-            pluginWindow.deleteAndZero();
-
-        processorManager.loadPlugin(fileChooser.getResult().getFullPathName());
-        synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
-                               juce::NotificationType::sendNotification);
+        loadPluginCallback(fileChooser.getResult().getFullPathName());
 #ifdef IDEATOR_APP
         // TODO: arguments hard coded here, also it doesn't work when the block size is 256 and idk why
         processorManager.prepareToPlay(512, 44100.f);
@@ -291,6 +303,24 @@ void Interface::loadPluginButtonClicked()
 #endif
     }
 }
+
+void Interface::loadPluginCallback(const juce::String &path)
+{
+    // If there is a opened plugin window, delete it.
+    // Must delete the window before loading a new plugin
+    // because the plugin editor is bounded to its plugin processor
+    if (pluginWindow)
+        pluginWindow.deleteAndZero();
+
+    processorManager.loadPlugin(path);
+
+    synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
+                           juce::NotificationType::sendNotification);
+}
+
+// =================================================
+// button callbacks
+// =================================================
 
 void Interface::openPluginEditorButtonClicked()
 {
@@ -418,7 +448,7 @@ void Interface::setLibraryButtonClicked()
             auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, pluginPath, descriptors);
             if (!isSuccessful)
                 continue;
-            presetList.addItem(presetPath, descriptors);
+            presetList.addItem(pluginPath, presetPath, descriptors);
         }
     }
 }

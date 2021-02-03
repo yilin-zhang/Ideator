@@ -20,6 +20,7 @@ public:
     virtual ~PluginManager();
     // methods for the plugin
     bool loadPlugin(const juce::String& path) override;
+    const juce::String& getPluginPath() const override;
     bool checkPluginLoaded() const override;
     juce::AudioProcessorEditor* getPluginEditor() override;
     void addMidiEvent(const juce::MidiMessage &midiMessage) override;

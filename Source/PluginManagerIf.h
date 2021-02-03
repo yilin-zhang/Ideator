@@ -17,6 +17,7 @@ class PluginManagerIf
 public:
     virtual ~PluginManagerIf()= default;
     virtual bool loadPlugin(const juce::String &path) = 0;
+    virtual const juce::String& getPluginPath() const = 0;
     virtual bool checkPluginLoaded() const = 0;
     virtual juce::AudioProcessorEditor *getPluginEditor() = 0;
     virtual void addMidiEvent(const juce::MidiMessage &midiMessage) = 0;

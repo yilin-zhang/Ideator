@@ -47,6 +47,11 @@ bool ProcessorManager::loadPlugin(const juce::String& path)
     return audioProcessor.loadPlugin(path);
 }
 
+const juce::String& ProcessorManager::getPresetPath() const
+{
+    return audioProcessor.getPresetPath();
+}
+
 bool ProcessorManager::checkPluginLoaded() const
 {
     return audioProcessor.checkPluginLoaded();
@@ -117,8 +122,8 @@ void ProcessorManager::setPresetPath(const juce::String &path)
     audioProcessor.setPresetPath(path);
 }
 
-const juce::String& ProcessorManager::getPresetPath() const
+const juce::String& ProcessorManager::getPluginPath() const
 {
-    return audioProcessor.getPresetPath();
+    return audioProcessor.getPluginPath();
 }
 
