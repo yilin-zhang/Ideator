@@ -246,12 +246,25 @@ bool PluginManager::saveAudio(juce::String &audioPath)
 
 void PluginManager::sendAudio()
 {
-    juce::DatagramSocket socket;
-    audioBufferToSend.numSamples = presetAudio.getNumSamples();
-    audioBufferToSend.numChannels = presetAudio.getNumChannels();
-    audioBufferToSend.arrayOfReadPointers = presetAudio.getArrayOfReadPointers();
+    if (!plugin)
+        return;
 
-    socket.write(LOCAL_ADDRESS, UDP_SEND_PORT, &audioBufferToSend, sizeof(audioBufferToSend));
+    // A cleared presetAudio buffer means the patch has been changed, so we should update
+    // the buffer, otherwise there is no need to update.
+    if (presetAudio.hasBeenCleared())
+        renderAudio();
+
+    juce::DatagramSocket socket;
+
+    UdpManager udpManager(LOCAL_ADDRESS, UDP_SEND_PORT);
+    int writtenBytes = udpManager.sendBuffer(presetAudio.getReadPointer(0), presetAudio.getNumSamples());
+    if (writtenBytes == -1)
+    {
+        DBG("PluginManager::sendAudio error.");
+        return;
+    }
+
+    DBG("PluginManager::sendAudio: An audio buffer sent.");
 }
 
 void PluginManager::loadPreset(const juce::String &presetPath)

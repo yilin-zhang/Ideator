@@ -59,11 +59,4 @@ private:
     void resetWhenParameterChanged();
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
     void audioProcessorChanged (juce::AudioProcessor *processor) override;
-
-    struct AudioBufferToSend
-    {
-        int numChannels;
-        int numSamples;
-        const float ** arrayOfReadPointers;
-    } audioBufferToSend;
 };

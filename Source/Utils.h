@@ -12,6 +12,12 @@
 
 #include <JuceHeader.h>
 #include <unordered_set>
+#include <utility>
+#include "Utils.h"
+
+// ========================================
+// PresetManager
+// ========================================
 
 class PresetManager
 {
@@ -87,4 +93,94 @@ public:
         // true means parse successfully
         return true;
     }
+};
+
+// ========================================
+// UdpManager
+// ========================================
+
+const int FLOAT_SIZE = sizeof (float);
+const int INT_SIZE = sizeof (int);
+const int BOOL_SIZE = sizeof (bool);
+
+class UdpManager
+{
+public:
+    UdpManager(juce::String address, int port):
+    address(std::move(address)), port(port),
+    bufferSize((UDP_MESSAGE_SIZE - INT_SIZE*3 - BOOL_SIZE) / FLOAT_SIZE)
+    {
+        resetMessageStruct();
+    }
+
+    int sendBuffer(const float* bufferArray, int size)
+    {
+        // calculate how many message it should send and the size of the last buffer
+        int numMessages = size / bufferSize;
+        int lastNumSamples;
+        if (size % bufferSize != 0)
+        {
+            ++numMessages;
+            lastNumSamples = size % bufferSize;
+        }
+        else
+            lastNumSamples = bufferSize;
+
+        // set id
+        udpMessage.id = rand.nextInt();
+        int byteCounter = 0;
+
+        // send messages
+        for (int i=0; i<numMessages; ++i)
+        {
+            // check if it's the last message
+            if (i == numMessages - 1)
+            {
+                udpMessage.isLast = true;
+                udpMessage.numSamples = lastNumSamples;
+            }
+            else
+                udpMessage.numSamples = bufferSize;
+
+            udpMessage.index = i;
+            memcpy(udpMessage.buffer, bufferArray + i*bufferSize, sizeof(float) * udpMessage.numSamples);
+
+            int writtenBytes = socket.write(address, port, &udpMessage, sizeof(UdpMessage));
+            if (writtenBytes == -1)
+                return -1;
+            else
+                byteCounter += writtenBytes;
+        }
+
+        // clean up
+        resetMessageStruct();
+
+        return byteCounter;
+    }
+
+private:
+    const juce::String address;
+    const int port;
+    const int bufferSize;
+    juce::Random rand;
+
+    struct UdpMessage
+    {
+        int id;
+        int index;
+        bool isLast;
+        int numSamples;
+        float buffer[(UDP_MESSAGE_SIZE - INT_SIZE*3 - BOOL_SIZE) / FLOAT_SIZE];
+    } udpMessage;
+
+    void resetMessageStruct()
+    {
+        udpMessage.id = 0;
+        udpMessage.index = 0;
+        udpMessage.isLast = false;
+        udpMessage.numSamples = 0;
+        memset(udpMessage.buffer, 0.f, bufferSize);
+    }
+
+    juce::DatagramSocket socket;
 };
