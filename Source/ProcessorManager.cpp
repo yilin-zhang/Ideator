@@ -87,7 +87,7 @@ void ProcessorManager::renderAudio()
     audioProcessor.renderAudio();
 }
 
-bool ProcessorManager::saveAudio(juce::String &audioPath)
+bool ProcessorManager::saveAudio(const juce::String &audioPath)
 {
     return audioProcessor.saveAudio(audioPath);
 }
@@ -102,9 +102,9 @@ void ProcessorManager::loadPreset(const juce::String &presetPath)
     audioProcessor.loadPreset(presetPath);
 }
 
-void ProcessorManager::savePreset(const juce::String &presetPath)
+bool ProcessorManager::savePreset(const juce::String &presetPath)
 {
-    audioProcessor.savePreset(presetPath);
+    return audioProcessor.savePreset(presetPath);
 }
 
 void ProcessorManager::setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors)

@@ -202,7 +202,7 @@ void PluginManager::renderAudio()
     }
 }
 
-bool PluginManager::saveAudio(juce::String &audioPath)
+bool PluginManager::saveAudio(const juce::String &audioPath)
 {
     if (!plugin)
         return false;
@@ -213,19 +213,12 @@ bool PluginManager::saveAudio(juce::String &audioPath)
         renderAudio();
 
     // save the presetAudio buffer to wav
-    // get time stamp
-    time_t now = time(nullptr);
-    std::stringstream timeStringStream;
-    timeStringStream << now;
-    // form the audio path
-    audioPath = TMP_AUDIO_DIR + timeStringStream.str() + ".wav";
+
     // save to file
     juce::WavAudioFormat format;
     std::unique_ptr<juce::AudioFormatWriter> writer;
     juce::File wavFile(audioPath);
-    juce::File wavDir(TMP_AUDIO_DIR);
-    // create the directory if it doesn't exist
-    if (!wavDir.createDirectory())
+    if (!wavFile.create().wasOk())
         return false;
 
     writer.reset (format.createWriterFor (new juce::FileOutputStream (wavFile),
@@ -299,10 +292,10 @@ void PluginManager::loadPreset(const juce::String &presetPath)
 
 }
 
-void PluginManager::savePreset(const juce::String &presetPath)
+bool PluginManager::savePreset(const juce::String &presetPath)
 {
     if (!plugin)
-        return;
+        return false;
 
     // convert the binary state to XML
     juce::MemoryBlock stateBlock;
@@ -312,15 +305,17 @@ void PluginManager::savePreset(const juce::String &presetPath)
     if (!xmlState)
     {
         DBG("Data is unsuitable or corrupted.");
-        return;
+        return false;
     }
 
     // generate preset in XML format
     juce::XmlElement xmlPreset = PresetManager::generate(*xmlState, pluginPath, timbreDescriptors);
 
     juce::File outputFile(presetPath);
-    outputFile.create();
+    if (!outputFile.create().wasOk())
+        return false;
     xmlPreset.writeTo(outputFile);
+    return true;
 }
 
 void PluginManager::setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors)

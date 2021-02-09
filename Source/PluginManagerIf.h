@@ -25,10 +25,10 @@ public:
     virtual const juce::Array<juce::AudioProcessorParameter *> &getPluginParameters() const = 0;
     virtual void setPluginParameter(int parameterIndex, float newValue) = 0;
     virtual void renderAudio() = 0;
-    virtual bool saveAudio(juce::String &audioPath) = 0;
+    virtual bool saveAudio(const juce::String &audioPath) = 0;
     virtual void sendAudio() = 0;
     virtual void loadPreset(const juce::String &presetPath) = 0;
-    virtual void savePreset(const juce::String &presetPath) = 0;
+    virtual bool savePreset(const juce::String &presetPath) = 0;
     virtual void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) = 0;
     virtual const std::unordered_set<juce::String>& getTimbreDescriptors() const = 0;
     virtual void setPresetPath(const juce::String &path) = 0;

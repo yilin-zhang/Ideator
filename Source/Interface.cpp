@@ -161,10 +161,8 @@ void Interface::resized()
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> openPluginEditorButtonArea (10, 45,
                                                      buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> saveAudioButtonArea (10, 80,
-                                              buttonSize.getWidth(), buttonSize.getHeight());
-    // juce::Rectangle<int> getRandomPatchButtonArea (10, 115,
-    //                                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> analyzeLibraryButtonArea (10, 80,
+                                                   buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> setLibraryButtonArea (10, 115,
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> loadPresetButtonArea (10, 265,
@@ -187,9 +185,8 @@ void Interface::resized()
 
     loadPluginButton.setBounds(loadPluginButtonArea);
     openPluginEditorButton.setBounds(openPluginEditorButtonArea);
-    // getRandomPatchButton.setBounds(getRandomPatchButtonArea);
     setLibraryButton.setBounds(setLibraryButtonArea);
-    saveAudioButton.setBounds(saveAudioButtonArea);
+    analyzeLibraryButton.setBounds(analyzeLibraryButtonArea);
     searchButton.setBounds(searchButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
@@ -209,11 +206,8 @@ void Interface::initializeComponents()
     openPluginEditorButton.onClick = [this] {openPluginEditorButtonClicked(); };
     addAndMakeVisible(openPluginEditorButton);
 
-    // getRandomPatchButton.onClick = [this] {getRandomPatchButtonClicked(); };
-    // addAndMakeVisible(getRandomPatchButton);
-
-    saveAudioButton.onClick = [this] { saveAudioButtonClicked(); };
-    addAndMakeVisible(saveAudioButton);
+    analyzeLibraryButton.onClick = [this] { analyzeLibraryButtonClicked(); };
+    addAndMakeVisible(analyzeLibraryButton);
 
     searchButton.onClick = [this] {searchButtonClicked(); };
     addAndMakeVisible(searchButton);
@@ -364,59 +358,28 @@ void Interface::openPluginEditorButtonClicked()
     }
 }
 
-void Interface::getRandomPatchButtonClicked()
+void Interface::analyzeLibraryButtonClicked()
 {
-    // check if the plugin has been loaded
-    if (!processorManager.checkPluginLoaded())
-    {
-        DBG("No plugin loaded!");
-        return;
-    }
+    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
 
-    auto parameters = processorManager.getPluginParameters();
-    int numParameters = parameters.size();
-    DBG("The plugin has: " << numParameters << " parameters");
-
-    // NOTE: Is it OK to do like this? what if the second command arrives before the first one?
-    // inform the python program how many parameters it has to generate
-    juce::OSCMessage msgNumParameters(OSC_SEND_PATTERN + "num_parameters", numParameters);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgNumParameters);
-
-    // inform the python program to generate a random patch and send it back
-    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "get_random_patch", 1);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
-
-    // NOTE: the following code is for sending osc messages
-    // for (int i=0; i<numParameters; ++i)
-    // {
-    //     juce::OSCMessage msgParamter(OSC_SEND_PATTERN + "parameter/" + juce::String(i), i);
-    //     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgParamter);
-    // }
-}
-
-void Interface::saveAudioButtonClicked()
-{
-    // check if the plugin has been loaded
-    if (!processorManager.checkPluginLoaded())
-    {
-        DBG("No plugin loaded!");
-        return;
-    }
-
-    // get the audio path
-    juce::String audioPath;
-    bool saveSucceeded = processorManager.saveAudio(audioPath);
-    if (!saveSucceeded)
-        return;
-
-    // inform the python program to fetch the data
-    juce::OSCMessage msgRandomize(OSC_SEND_PATTERN + "save_audio/" + audioPath, 1);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgRandomize);
+    // processorManager.sendAudio();
 }
 
 void Interface::searchButtonClicked()
 {
-    // TODO: send OSC to the python program to request the preset searching
+    // check if the plugin has been loaded
+    if (!processorManager.checkPluginLoaded())
+    {
+        DBG("No plugin loaded!");
+        return;
+    }
+
+    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
+
+    // TODO: send OSC to inform python a new audio has been sent
+    processorManager.sendAudio();
 }
 
 void Interface::loadPresetButtonClicked()
@@ -471,7 +434,8 @@ void Interface::savePresetButtonClicked()
     juce::FileChooser fileChooser("Select the path", {});
     if (fileChooser.browseForFileToSave(true))
     {
-        processorManager.savePreset(fileChooser.getResult().getFullPathName());
+        if (!processorManager.savePreset(fileChooser.getResult().getFullPathName()))
+            DBG("Interface::savePresetButtonClicked error.");
     }
 }
 

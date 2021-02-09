@@ -28,10 +28,10 @@ public:
     const juce::Array<juce::AudioProcessorParameter*>& getPluginParameters() const override;
     void setPluginParameter(int parameterIndex, float newValue) override;
     void renderAudio() override;
-    bool saveAudio(juce::String &audioPath) override;
+    bool saveAudio(const juce::String &audioPath) override;
     void sendAudio() override;
     void loadPreset(const juce::String &presetPath) override;
-    void savePreset(const juce::String &presetPath) override;
+    bool savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
     const std::unordered_set<juce::String>& getTimbreDescriptors() const override;
     void setPresetPath(const juce::String &path) override;

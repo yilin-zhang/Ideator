@@ -75,12 +75,9 @@ private:
     // open the plugin editor
     juce::TextButton openPluginEditorButton   { "Open Plugin" };
     void openPluginEditorButtonClicked();
-    // get a random patch
-    juce::TextButton getRandomPatchButton   { "Random Patch" };
-    void getRandomPatchButtonClicked();
-    // render the audio
-    juce::TextButton saveAudioButton {"Save Audio" };
-    void saveAudioButtonClicked();
+    // analyze the audio
+    juce::TextButton analyzeLibraryButton {"Analyze Lib" };
+    void analyzeLibraryButtonClicked();
     // load the preset
     juce::TextButton loadPresetButton { "Load Preset" };
     void loadPresetButtonClicked();
