@@ -161,10 +161,10 @@ void Interface::resized()
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> openPluginEditorButtonArea (10, 45,
                                                      buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> analyzeLibraryButtonArea (10, 80,
-                                                   buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> setLibraryButtonArea (10, 115,
+    juce::Rectangle<int> setLibraryButtonArea (10, 80,
                                                buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> analyzeLibraryButtonArea (10, 115,
+                                                   buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> loadPresetButtonArea (10, 265,
                                                buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> savePresetButtonArea (10, 300,
@@ -360,10 +360,15 @@ void Interface::openPluginEditorButtonClicked()
 
 void Interface::analyzeLibraryButtonClicked()
 {
+    // check if the plugin has been loaded
+    if (!processorManager.checkPluginLoaded())
+    {
+        DBG("No plugin loaded!");
+        return;
+    }
+
     juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1);
     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
-
-    // processorManager.sendAudio();
 }
 
 void Interface::searchButtonClicked()
@@ -375,11 +380,10 @@ void Interface::searchButtonClicked()
         return;
     }
 
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
+    auto tags = getTags();
 
-    // TODO: send OSC to inform python a new audio has been sent
-    processorManager.sendAudio();
+    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "search_preset", 1);
+    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
 }
 
 void Interface::loadPresetButtonClicked()
