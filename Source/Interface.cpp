@@ -373,15 +373,7 @@ void Interface::analyzeLibraryButtonClicked()
 
 void Interface::searchButtonClicked()
 {
-    // check if the plugin has been loaded
-    if (!processorManager.checkPluginLoaded())
-    {
-        DBG("No plugin loaded!");
-        return;
-    }
-
     auto tags = getTags();
-
     juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "search_preset", 1);
     oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
 }
@@ -443,8 +435,11 @@ void Interface::savePresetButtonClicked()
     }
 }
 
-std::vector<juce::String> Interface::getTags() const
+juce::StringArray Interface::getTags() const
 {
-    // TODO: finish this
-    return {"xxx"};
+    juce::StringArray inputTags;
+    inputTags.addTokens(tagInputBox.getText(), ", &", "\"");
+    inputTags.removeEmptyStrings(true);
+
+    return inputTags;
 }

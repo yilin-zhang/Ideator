@@ -82,13 +82,10 @@ public:
         auto xmlDescriptors = xmlMeta->getChildByName("Descriptors");
         juce::StringArray descriptorArray;
         descriptorArray.addTokens(xmlDescriptors->getAllSubText(), ", &", "\"");
+        descriptorArray.removeEmptyStrings(true);
         descriptors.clear();
         for (auto &descriptor : descriptorArray)
-        {
-            if (descriptor.isEmpty())
-                continue;
             descriptors.insert(descriptor);
-        }
 
         // true means parse successfully
         return true;

@@ -90,7 +90,7 @@ private:
     // input box
     juce::Value tagInputValue;
     juce::TextEditor tagInputBox {"tagInput"};
-    std::vector<juce::String> getTags() const;
+    juce::StringArray getTags() const;
     // search button
     juce::TextButton searchButton {"Search"};
     void searchButtonClicked();
