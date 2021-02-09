@@ -19,8 +19,8 @@
 PresetTableModel::PresetTableModel()
 {
     presetTable.setModel(this);
-    presetTable.getHeader().addColumn("Path", 0, 80);
-    presetTable.getHeader().addColumn("Descriptors", 1, 80);
+    presetTable.getHeader().addColumn("Path", 1, 80);
+    presetTable.getHeader().addColumn("Descriptors", 2, 80);
     presetTable.setColour(juce::ListBox::backgroundColourId, juce::Colour::greyLevel(0.2f));
     presetTable.setRowHeight(30);
     addAndMakeVisible(presetTable);
@@ -49,7 +49,7 @@ void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId
     g.fillAll(juce::Colour::greyLevel(rowIsSelected ? 0.45f : 0.05f));
     g.setFont(18);
     g.setColour(juce::Colours::whitesmoke);
-    if (columnId == 0)
+    if (columnId == 1)
         g.drawFittedText(presetPaths[rowNumber], {6, 0, width - 12, height}, juce::Justification::centredLeft, 1, 1.f);
     else
     {
@@ -248,7 +248,11 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 
     else if (source == &presetList)
     {
-        if (presetList.getPluginPath() != processorManager.getPluginPath())
+        // it's possible that the presetList returns an empty plugin path when
+        // the user imports a new library after he/she loads a plugin.
+        // so it's necessary to reject the empty plugin path.
+        if (presetList.getPluginPath() != processorManager.getPluginPath() &&
+            !presetList.getPluginPath().isEmpty())
             loadPluginCallback(presetList.getPluginPath());
         processorManager.loadPreset(presetList.getPresetPath());
     }
