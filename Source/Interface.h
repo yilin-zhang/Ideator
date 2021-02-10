@@ -28,6 +28,7 @@ public:
     void clear();
     const juce::String& getPluginPath() const;
     const juce::String& getPresetPath() const;
+    const juce::Array<juce::String>& getLibraryPresetPaths() const;
 private:
     juce::TableListBox presetTable;
     juce::Array<juce::String> pluginPaths;
@@ -40,9 +41,7 @@ private:
 class Interface : public juce::Component,
                   private juce::ChangeListener,
                   private juce::Label::Listener,
-                  private juce::MidiKeyboardState::Listener,
-                  private juce::OSCReceiver,
-                  private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
+                  private juce::MidiKeyboardState::Listener
 {
 public:
     Interface(ProcessorManager&);
@@ -59,11 +58,6 @@ private:
 
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
     void labelTextChanged(juce::Label* labelThatHasChanged) override;
-
-    // OSC handling
-    juce::OSCSender oscSender;
-    void oscMessageReceived (const juce::OSCMessage& message) override;
-    static void showConnectionErrorMessage (const juce::String& messageText);
 
     // custom callbacks
     void loadPluginCallback(const juce::String &path);

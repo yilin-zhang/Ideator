@@ -112,6 +112,11 @@ const juce::String& PresetTableModel::getPresetPath() const
     return currentPresetPath;
 }
 
+const juce::Array<juce::String>& PresetTableModel::getLibraryPresetPaths() const
+{
+    return presetPaths;
+}
+
 // ================================================
 // Interface
 // ================================================
@@ -126,15 +131,6 @@ Interface::Interface(ProcessorManager& pm) :
 
     initializeComponents();
 
-    // https://docs.juce.com/master/tutorial_osc_sender_receiver.html
-    // specify here on which UDP port number to receive incoming OSC messages
-    if (! connect (OSC_RECEIVE_PORT))
-        showConnectionErrorMessage ("Error: could not connect to UDP port " +
-        juce::String(OSC_RECEIVE_PORT) + ".");
-
-    addListener(this, OSC_RECEIVE_PATTERN + "set_parameter");
-    oscSender.connect(LOCAL_ADDRESS, OSC_SEND_PORT);
-
     presetList.addChangeListener(this);
 }
 
@@ -145,7 +141,6 @@ Interface::~Interface()
 
     keyboardState.removeListener(this);
 
-    removeListener(this);
 }
 
 void Interface::paint (juce::Graphics& g)
@@ -248,34 +243,17 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
         if (presetList.getPluginPath() != processorManager.getPluginPath() &&
             !presetList.getPluginPath().isEmpty())
             loadPluginCallback(presetList.getPluginPath());
-        processorManager.loadPreset(presetList.getPresetPath());
+        if (!processorManager.loadPreset(presetList.getPresetPath()))
+        {
+            DBG("Interface::changeListenerCallback error.");
+            return;
+        }
     }
 }
 
 void Interface::labelTextChanged(juce::Label *labelThatHasChanged)
 {
     // NOTE: not sure if this is necessary, but let's just keep it for now
-}
-
-void Interface::oscMessageReceived(const juce::OSCMessage &message)
-{
-    // handle the messages requesting to set parameters
-    if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "set_parameter")
-    .matches(juce::OSCAddress(message.getAddressPattern().toString())))
-    {
-        // the format is: (parameterIndex, newValue, parameterIndex, newValue, ...)
-        int numParamsToSet = message.size() / 2;
-        for (int i=0; i<numParamsToSet*2; i+=2)
-            processorManager.setPluginParameter(message[i].getInt32(), message[i + 1].getFloat32());
-    }
-}
-
-void Interface::showConnectionErrorMessage (const juce::String& messageText)
-{
-    juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::WarningIcon,
-                                            "Connection error",
-                                            messageText,
-                                            "OK");
 }
 
 void Interface::handleNoteOn(juce::MidiKeyboardState *, int midiChannel, int midiNoteNumber, float velocity)
@@ -360,22 +338,12 @@ void Interface::openPluginEditorButtonClicked()
 
 void Interface::analyzeLibraryButtonClicked()
 {
-    // check if the plugin has been loaded
-    if (!processorManager.checkPluginLoaded())
-    {
-        DBG("No plugin loaded!");
-        return;
-    }
-
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
+    processorManager.analyzeLibrary(presetList.getLibraryPresetPaths());
 }
 
 void Interface::searchButtonClicked()
 {
     auto tags = getTags();
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "search_preset", 1);
-    oscSender.sendToIPAddress(LOCAL_ADDRESS, OSC_SEND_PORT, msgAnalyzeLibrary);
 }
 
 void Interface::loadPresetButtonClicked()
@@ -383,7 +351,11 @@ void Interface::loadPresetButtonClicked()
     juce::FileChooser fileChooser("Select the path", {});
     if (fileChooser.browseForFileToOpen())
     {
-        processorManager.loadPreset(fileChooser.getResult().getFullPathName());
+        if (!processorManager.loadPreset(fileChooser.getResult().getFullPathName()))
+        {
+            DBG("Interface::loadPresetButtonClicked error.");
+            return;
+        }
 
         // The plugin path is written inside the preset and the program will
         // load the plugin according to it. Therefore, we should update the plugin name here.

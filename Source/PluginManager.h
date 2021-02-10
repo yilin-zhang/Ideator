@@ -11,9 +11,11 @@
 #pragma once
 #include <JuceHeader.h>
 #include "PluginManagerIf.h"
+#include "Utils.h"
 
 class PluginManager : public PluginManagerIf,
-                      private juce::AudioProcessorListener
+                      private juce::AudioProcessorListener,
+                      private juce::ChangeListener
 {
 public:
     PluginManager();
@@ -30,12 +32,13 @@ public:
     void renderAudio() override;
     bool saveAudio(const juce::String &audioPath) override;
     void sendAudio() override;
-    void loadPreset(const juce::String &presetPath) override;
+    bool loadPreset(const juce::String &presetPath) override;
     bool savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
     const std::unordered_set<juce::String>& getTimbreDescriptors() const override;
     void setPresetPath(const juce::String &path) override;
     const juce::String& getPresetPath() const override;
+    bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
 
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
@@ -59,4 +62,12 @@ private:
     void resetWhenParameterChanged();
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
     void audioProcessorChanged (juce::AudioProcessor *processor) override;
+
+    void changeListenerCallback (juce::ChangeBroadcaster *source) override;
+    bool analyzeNextPresetInLibrary();
+
+    juce::Array<juce::String> presetPathsInLibrary;
+    int numPresetAnalyzed;
+
+    OSCManager oscManager;
 };

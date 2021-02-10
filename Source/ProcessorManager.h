@@ -44,12 +44,13 @@ public:
     void renderAudio() override;
     bool saveAudio(const juce::String &audioPath) override;
     void sendAudio() override;
-    void loadPreset(const juce::String &presetPath) override;
+    bool loadPreset(const juce::String &presetPath) override;
     bool savePreset(const juce::String &presetPath) override;
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
     const std::unordered_set<juce::String>& getTimbreDescriptors() const override;
     void setPresetPath(const juce::String &path) override;
     const juce::String& getPresetPath() const override;
+    bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
 
 private:
 #ifdef IDEATOR_APP

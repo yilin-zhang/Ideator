@@ -10,18 +10,18 @@
 
 #include "PluginManager.h"
 #include "Config.h"
-#include "Utils.h"
 #include <sstream>
-#include <ctime>
 
 PluginManager::PluginManager():
         plugin(nullptr),
         initialSampleRate(44100.f),
         initialBufferSize(256),
         internSampleRate(initialSampleRate),
-        internSamplesPerBlock(initialBufferSize)
+        internSamplesPerBlock(initialBufferSize),
+        numPresetAnalyzed(0)
 {
     presetAudio.clear();
+    oscManager.analysisFinishedBroadcaster.addChangeListener(this);
 }
 
 PluginManager::~PluginManager()= default;
@@ -69,6 +69,8 @@ bool PluginManager::loadPlugin(const juce::String& path)
         // Resize the pluginParameters patch type to fit this plugin and init
         // all the values to 0.0f!
         //fillAvailablePluginParameters (pluginParameters);
+
+        plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
 
         // notify the host once any parameter has changed
         plugin->addListener(this);
@@ -143,8 +145,9 @@ void PluginManager::renderAudio()
     // initialize constants
     const double audioLength = 3.; // 3 seconds of audio
     const double noteLength = 2.;
-    const int numSamples = static_cast<int>(internSampleRate) * static_cast<int>(audioLength);
-    const int numNoteSamples = static_cast<int>(internSampleRate) * static_cast<int>(noteLength);
+    const int renderSampleRate = 44100;
+    const int numSamples = static_cast<int>(renderSampleRate) * static_cast<int>(audioLength);
+    const int numNoteSamples = static_cast<int>(renderSampleRate) * static_cast<int>(noteLength);
     const int blockSize = internSamplesPerBlock;
     const int numChannels = plugin->getTotalNumOutputChannels(); // NOTE: The VST3 version of Helm returns 0 (don't know why)
     const int midiNote = 60;
@@ -173,7 +176,7 @@ void PluginManager::renderAudio()
     // set plugin to non-realtime mode and process the block
     plugin->setNonRealtime(true);
     // must call prepareToPlay to enable the non-realtime setting
-    plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
+    plugin->prepareToPlay(renderSampleRate, blockSize);
 
     // process
     bool hasNoteOff = false;
@@ -200,6 +203,10 @@ void PluginManager::renderAudio()
                                  0,
                                  numSamplesToCopy);
     }
+
+    // set the plugin state back to realtime mode
+    plugin->setNonRealtime(false);
+    plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
 }
 
 bool PluginManager::saveAudio(const juce::String &audioPath)
@@ -211,8 +218,6 @@ bool PluginManager::saveAudio(const juce::String &audioPath)
     // the buffer, otherwise there is no need to update.
     if (presetAudio.hasBeenCleared())
         renderAudio();
-
-    // save the presetAudio buffer to wav
 
     // save to file
     juce::WavAudioFormat format;
@@ -229,10 +234,6 @@ bool PluginManager::saveAudio(const juce::String &audioPath)
                                           0));
     if (writer != nullptr)
         writer->writeFromAudioSampleBuffer (presetAudio, 0, presetAudio.getNumSamples());
-
-    // set the plugin state back to realtime mode
-    plugin->setNonRealtime(false);
-    plugin->prepareToPlay(internSampleRate, internSamplesPerBlock);
 
     return true;
 }
@@ -260,14 +261,14 @@ void PluginManager::sendAudio()
     DBG("PluginManager::sendAudio: An audio buffer sent.");
 }
 
-void PluginManager::loadPreset(const juce::String &presetPath)
+bool PluginManager::loadPreset(const juce::String &presetPath)
 {
     // We do not check if a plugin has been loaded here, because the function will
     // load the plugin if it is not loaded.
     juce::File inputFile(presetPath);
     auto xmlPreset = juce::XmlDocument::parse(inputFile);
     if (!xmlPreset)
-        return;
+        return false;
 
     // parse the preset
     juce::XmlElement xmlState("Parameters");
@@ -275,7 +276,7 @@ void PluginManager::loadPreset(const juce::String &presetPath)
     std::unordered_set<juce::String> descriptors;
     auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, newPluginPath, descriptors);
     if (!isSuccessful)
-        return;
+        return false;
 
     // check the plugin path first, just return if it is invalid
     if (pluginPath != newPluginPath)
@@ -286,10 +287,15 @@ void PluginManager::loadPreset(const juce::String &presetPath)
     juce::AudioProcessor::copyXmlToBinary(xmlState, stateBlock);
     plugin->setStateInformation(stateBlock.getData(), static_cast<int>(stateBlock.getSize()));
 
+    // the plugin will not notify the host when a preset is set in this way, so we should
+    // call the callback manually
+    audioProcessorChanged(plugin.get());
+
     // set meta data
     this->presetPath = presetPath;
     timbreDescriptors = descriptors;
 
+    return true;
 }
 
 bool PluginManager::savePreset(const juce::String &presetPath)
@@ -344,6 +350,31 @@ const juce::String& PluginManager::getPluginPath() const
     return pluginPath;
 }
 
+bool PluginManager::analyzeLibrary(const juce::Array<juce::String>& presetPaths)
+{
+    presetPathsInLibrary = presetPaths;
+    numPresetAnalyzed = 0;
+    // once this function is get called, a "loop" will start
+    // The C++ and the python programs will send messages back and forth until
+    // all the presets have been analyzed
+    return analyzeNextPresetInLibrary();
+}
+
+bool PluginManager::analyzeNextPresetInLibrary()
+{
+    juce::String path = presetPathsInLibrary[numPresetAnalyzed];
+
+    if (!loadPreset(path))
+        return false;
+
+    oscManager.prepareToAnalyzeAudio(path);
+    sendAudio();
+
+    std::cout << "Analyzing " << numPresetAnalyzed+1 << "/" << presetPathsInLibrary.size() << std::endl;
+
+    return true;
+}
+
 // ==================================================
 // AudioProcessorListener
 // ==================================================
@@ -377,4 +408,16 @@ void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
     // This function will be called when the Diva patch has been set to a new preset.
     resetWhenParameterChanged();
     DBG("The patch has been changed.");
+}
+
+void PluginManager::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    if (source == &oscManager.analysisFinishedBroadcaster)
+    {
+        ++numPresetAnalyzed;
+        if (numPresetAnalyzed < presetPathsInLibrary.size())
+            analyzeNextPresetInLibrary();
+        else
+            oscManager.finishAnalyzeAudio();
+    }
 }

@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 #include <unordered_set>
 #include <utility>
-#include "Utils.h"
+#include "Config.h"
 
 // ========================================
 // PresetManager
@@ -180,4 +180,66 @@ private:
     }
 
     juce::DatagramSocket socket;
+};
+
+// ========================================
+// OSC Manager
+// ========================================
+
+class OSCManager: private juce::OSCReceiver,
+                  private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
+{
+public:
+    OSCManager()
+    {
+        oscSender.connect(LOCAL_ADDRESS, OSC_SEND_PORT);
+
+        // https://docs.juce.com/master/tutorial_osc_sender_receiver.html
+        // specify here on which UDP port number to receive incoming OSC messages
+        if (! connect (OSC_RECEIVE_PORT))
+            showConnectionErrorMessage ("Error: could not connect to UDP port " +
+                                        juce::String(OSC_RECEIVE_PORT) + ".");
+
+        addListener(this, OSC_RECEIVE_PATTERN + "analyze_library");
+    }
+
+    void prepareToAnalyzeAudio(const juce::String& presetPath)
+    {
+        juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1, presetPath);
+        oscSender.send(msgAnalyzeLibrary);
+    }
+
+    void finishAnalyzeAudio()
+    {
+        juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 2, juce::String(""));
+        oscSender.send(msgAnalyzeLibrary);
+    }
+
+    // other class should NOT call any method of the broadcaster other than addListener
+    juce::ChangeBroadcaster analysisFinishedBroadcaster;
+
+private:
+    juce::OSCSender oscSender;
+
+    void showConnectionErrorMessage (const juce::String& messageText)
+    {
+        juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::WarningIcon,
+                                                "Connection error",
+                                                messageText,
+                                                "OK");
+    }
+
+    void oscMessageReceived (const juce::OSCMessage& message) override
+    {
+        // The Python program send to address `analyze_library` with number 1 that
+        // indicates the audio feature has been added
+        if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "analyze_library")
+                .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+        {
+            // inform other parts that the last audio buffer has been processed
+            analysisFinishedBroadcaster.sendChangeMessage();
+        }
+    }
+
+
 };

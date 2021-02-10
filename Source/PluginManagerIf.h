@@ -27,11 +27,12 @@ public:
     virtual void renderAudio() = 0;
     virtual bool saveAudio(const juce::String &audioPath) = 0;
     virtual void sendAudio() = 0;
-    virtual void loadPreset(const juce::String &presetPath) = 0;
+    virtual bool loadPreset(const juce::String &presetPath) = 0;
     virtual bool savePreset(const juce::String &presetPath) = 0;
     virtual void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) = 0;
     virtual const std::unordered_set<juce::String>& getTimbreDescriptors() const = 0;
     virtual void setPresetPath(const juce::String &path) = 0;
     virtual const juce::String& getPresetPath() const = 0;
+    virtual bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) = 0;
 };
 

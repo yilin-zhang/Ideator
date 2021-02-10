@@ -97,9 +97,9 @@ void ProcessorManager::sendAudio()
     audioProcessor.sendAudio();
 }
 
-void ProcessorManager::loadPreset(const juce::String &presetPath)
+bool ProcessorManager::loadPreset(const juce::String &presetPath)
 {
-    audioProcessor.loadPreset(presetPath);
+    return audioProcessor.loadPreset(presetPath);
 }
 
 bool ProcessorManager::savePreset(const juce::String &presetPath)
@@ -127,3 +127,7 @@ const juce::String& ProcessorManager::getPluginPath() const
     return audioProcessor.getPluginPath();
 }
 
+bool ProcessorManager::analyzeLibrary(const juce::Array<juce::String>& presetPaths)
+{
+    return audioProcessor.analyzeLibrary(presetPaths);
+}
