@@ -386,10 +386,10 @@ void Interface::setLibraryButtonClicked()
             if (!xmlPreset)
                 return;
 
-            juce::XmlElement xmlState("Parameters");
             juce::String pluginPath;
             std::unordered_set<juce::String> descriptors;
-            auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, pluginPath, descriptors);
+            juce::Array<std::pair<int, float>> parameters;
+            auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, pluginPath, descriptors);
             if (!isSuccessful)
                 continue;
             presetList.addItem(pluginPath, presetPath, descriptors);

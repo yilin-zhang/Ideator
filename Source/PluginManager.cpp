@@ -18,7 +18,8 @@ PluginManager::PluginManager():
         initialBufferSize(256),
         internSampleRate(initialSampleRate),
         internSamplesPerBlock(initialBufferSize),
-        numPresetAnalyzed(0)
+        numPresetAnalyzed(0),
+        oscManager(*this)
 {
     presetAudio.clear();
     oscManager.analysisFinishedBroadcaster.addChangeListener(this);
@@ -134,7 +135,7 @@ const juce::Array<juce::AudioProcessorParameter*>& PluginManager::getPluginParam
 void PluginManager::setPluginParameter(int parameterIndex, float newValue)
 {
     if (auto* param = plugin->getParameters()[parameterIndex])
-        param->setValue (newValue);
+        param->setValueNotifyingHost(newValue);
 }
 
 void PluginManager::renderAudio()
@@ -271,10 +272,10 @@ bool PluginManager::loadPreset(const juce::String &presetPath)
         return false;
 
     // parse the preset
-    juce::XmlElement xmlState("Parameters");
     juce::String newPluginPath;
     std::unordered_set<juce::String> descriptors;
-    auto isSuccessful = PresetManager::parse(*xmlPreset, xmlState, newPluginPath, descriptors);
+    juce::Array<std::pair<int, float>> parameters;
+    auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, newPluginPath, descriptors);
     if (!isSuccessful)
         return false;
 
@@ -283,9 +284,8 @@ bool PluginManager::loadPreset(const juce::String &presetPath)
         loadPlugin(newPluginPath);
 
     // set plugin parameters
-    juce::MemoryBlock stateBlock;
-    juce::AudioProcessor::copyXmlToBinary(xmlState, stateBlock);
-    plugin->setStateInformation(stateBlock.getData(), static_cast<int>(stateBlock.getSize()));
+    for (const auto& parameter : parameters)
+        setPluginParameter(parameter.first, parameter.second);
 
     // the plugin will not notify the host when a preset is set in this way, so we should
     // call the callback manually
@@ -303,19 +303,7 @@ bool PluginManager::savePreset(const juce::String &presetPath)
     if (!plugin)
         return false;
 
-    // convert the binary state to XML
-    juce::MemoryBlock stateBlock;
-    plugin->getStateInformation(stateBlock);
-    auto xmlState = juce::AudioProcessor::getXmlFromBinary(stateBlock.getData(),
-                                                           static_cast<int>(stateBlock.getSize()));
-    if (!xmlState)
-    {
-        DBG("Data is unsuitable or corrupted.");
-        return false;
-    }
-
-    // generate preset in XML format
-    juce::XmlElement xmlPreset = PresetManager::generate(*xmlState, pluginPath, timbreDescriptors);
+    juce::XmlElement xmlPreset = PresetManager::generate(plugin->getParameters(), pluginPath, timbreDescriptors);
 
     juce::File outputFile(presetPath);
     if (!outputFile.create().wasOk())
@@ -409,6 +397,10 @@ void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
     resetWhenParameterChanged();
     DBG("The patch has been changed.");
 }
+
+// ==================================================
+// AudioProcessorListener
+// ==================================================
 
 void PluginManager::changeListenerCallback(juce::ChangeBroadcaster *source)
 {

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="ezy7iH" name="Ideator-Plugin" projectType="audioplug" addUsingNamespaceToJuceHeader="0"
-              displaySplashScreen="1" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
+              displaySplashScreen="1" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              pluginFormats="buildAU,buildStandalone,buildVST,buildVST3">
   <MAINGROUP id="khuyTv" name="Ideator-Plugin">
     <GROUP id="{357D89BC-2DCC-29E7-2F78-2498732CAC1F}" name="Source">
+      <FILE id="VWXIBP" name="Utils.cpp" compile="1" resource="0" file="Source/Utils.cpp"/>
       <FILE id="MPRvvx" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
       <FILE id="uvKlm3" name="ProcessorManager.cpp" compile="1" resource="0"
             file="Source/ProcessorManager.cpp"/>
@@ -32,7 +34,8 @@
       <FILE id="lGfUrC" name="Interface.h" compile="0" resource="0" file="Source/Interface.h"/>
     </GROUP>
   </MAINGROUP>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_PLUGINHOST_AU="1" JUCE_PLUGINHOST_VST3="1"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_PLUGINHOST_AU="1" JUCE_PLUGINHOST_VST3="1"
+               JUCE_PLUGINHOST_VST="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
