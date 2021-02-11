@@ -75,7 +75,7 @@ class OSCManager: private juce::OSCReceiver,
 {
 public:
     OSCManager(PluginManager &pm);
-    void prepareToAnalyzeAudio(const juce::String& presetPath);
+    void prepareToAnalyzeAudio(const juce::String& presetPath, const std::unordered_set<juce::String>& descriptors);
     void finishAnalyzeAudio();
 
     // other class should NOT call any method of the broadcaster other than addListener

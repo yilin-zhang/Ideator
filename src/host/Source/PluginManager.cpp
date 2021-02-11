@@ -355,7 +355,7 @@ bool PluginManager::analyzeNextPresetInLibrary()
     if (!loadPreset(path))
         return false;
 
-    oscManager.prepareToAnalyzeAudio(path);
+    oscManager.prepareToAnalyzeAudio(path, timbreDescriptors);
     sendAudio();
 
     std::cout << "Analyzing " << numPresetAnalyzed+1 << "/" << presetPathsInLibrary.size() << std::endl;

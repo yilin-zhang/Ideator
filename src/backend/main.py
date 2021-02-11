@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Tuple
 import torch
 import numpy as np
 
@@ -20,12 +20,13 @@ class LibraryReceiver:
         self._feature_extractor = feature_extractor
 
     # manage the library data construction
-    def add_library_info(self, preset_path: str, buffer: np.array) -> None:
+    def add_library_info(self, preset_path: str, descriptors: Tuple[str], buffer: np.array) -> None:
+        print(f'preset_path: {preset_path}')
+        print(f'descriptor_list: {descriptors}')
         buffer = torch.from_numpy(buffer)
         buffer = buffer.reshape((1, -1))
         preset_feature = self._feature_extractor.encode(buffer)
-        print(f'{preset_feature.size}')
-        self._library_info[preset_path] = preset_feature
+        self._library_info[preset_path] = {'feature': preset_feature, 'descriptors': descriptors}
 
     def save_library_info(self) -> None:
         # TODO: the cache directory is in backend/ folder, consider move it to user directory in the future
@@ -36,16 +37,20 @@ class LibraryReceiver:
             pickle.dump(self._library_info, f)
 
 
-def analyze_library_callback(address: str, args: List[Any], *osc_args: List[Any]) -> None:
+def analyze_library_callback(address: str,
+                             args: List[Any],
+                             *osc_args: List[Any]) -> None:
     client, library_receiver, udp_buffer_receiver = args
     value = osc_args[0]
     preset_path = osc_args[1]
+    descriptors = osc_args[2]
 
     # receive an audio buffer
     if value == 1:
-        print(f'preset_path: {preset_path}')
         buffer = udp_buffer_receiver.receive()
-        library_receiver.add_library_info(preset_path, buffer)
+
+        descriptor_list = tuple(descriptors.split(','))
+        library_receiver.add_library_info(preset_path, descriptor_list, buffer)
         client.send_message("/Ideator/cpp/analyze_library", 1)
 
     # data receiving is over, save the library data

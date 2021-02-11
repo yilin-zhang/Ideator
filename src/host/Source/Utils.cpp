@@ -175,15 +175,27 @@ OSCManager::OSCManager(PluginManager &pm):pluginManger(pm), presetCounter(0)
     addListener(this, OSC_RECEIVE_PATTERN + "json_character");
 }
 
-void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath)
+void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
+                                       const std::unordered_set<juce::String>& descriptors)
 {
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1, presetPath);
+    // form a string of descriptors, use "," as the separator
+    juce::String descriptorString;
+    int idx = 0;
+    for (const auto& descriptor : descriptors)
+    {
+        descriptorString.append(descriptor, descriptor.length());
+        if (idx != descriptors.size() - 1)
+            descriptorString.append(",", 1);
+        ++idx;
+    }
+
+    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1, presetPath, descriptorString);
     oscSender.send(msgAnalyzeLibrary);
 }
 
 void OSCManager::finishAnalyzeAudio()
 {
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 2, juce::String(""));
+    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 2, juce::String(""), juce::String(""));
     oscSender.send(msgAnalyzeLibrary);
 }
 
