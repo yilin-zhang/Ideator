@@ -19,13 +19,20 @@ PluginManager::PluginManager():
         internSampleRate(initialSampleRate),
         internSamplesPerBlock(initialBufferSize),
         numPresetAnalyzed(0),
-        oscManager(*this)
+        oscManager(nullptr)
 {
     presetAudio.clear();
-    oscManager.analysisFinishedBroadcaster.addChangeListener(this);
 }
 
 PluginManager::~PluginManager()= default;
+
+
+void PluginManager::setOSCManager(OSCManager* oscManager)
+{
+    this->oscManager = oscManager;
+    oscManager->setPluginManager(this);
+    oscManager->analysisFinishedBroadcaster.addChangeListener(this);
+}
 
 /// Additional methods
 // https://github.com/fedden/RenderMan/blob/master/Source/RenderEngine.cpp
@@ -350,12 +357,15 @@ bool PluginManager::analyzeLibrary(const juce::Array<juce::String>& presetPaths)
 
 bool PluginManager::analyzeNextPresetInLibrary()
 {
+    if (!oscManager)
+        return false;
+
     juce::String path = presetPathsInLibrary[numPresetAnalyzed];
 
     if (!loadPreset(path))
         return false;
 
-    oscManager.prepareToAnalyzeAudio(path, timbreDescriptors);
+    oscManager->prepareToAnalyzeAudio(path, timbreDescriptors);
     sendAudio();
 
     std::cout << "Analyzing " << numPresetAnalyzed+1 << "/" << presetPathsInLibrary.size() << std::endl;
@@ -404,12 +414,15 @@ void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
 
 void PluginManager::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
-    if (source == &oscManager.analysisFinishedBroadcaster)
+    if (!oscManager)
+        return;
+
+    if (source == &oscManager->analysisFinishedBroadcaster)
     {
         ++numPresetAnalyzed;
         if (numPresetAnalyzed < presetPathsInLibrary.size())
             analyzeNextPresetInLibrary();
         else
-            oscManager.finishAnalyzeAudio();
+            oscManager->finishAnalyzeAudio();
     }
 }

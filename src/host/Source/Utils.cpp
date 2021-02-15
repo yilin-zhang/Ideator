@@ -157,7 +157,7 @@ void UdpManager::resetMessageStruct()
 // OSC Manager
 // ========================================
 
-OSCManager::OSCManager(PluginManager &pm):pluginManger(pm), presetCounter(0)
+OSCManager::OSCManager():presetCounter(0)
 {
     oscSender.connect(LOCAL_ADDRESS, OSC_SEND_PORT);
 
@@ -173,6 +173,11 @@ OSCManager::OSCManager(PluginManager &pm):pluginManger(pm), presetCounter(0)
     addListener(this, OSC_RECEIVE_PATTERN + "json_patch");
     addListener(this, OSC_RECEIVE_PATTERN + "json_path");
     addListener(this, OSC_RECEIVE_PATTERN + "json_character");
+}
+
+void OSCManager::setPluginManager(PluginManager *pm)
+{
+    pluginManager = pm;
 }
 
 void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
@@ -210,6 +215,8 @@ void OSCManager::showConnectionErrorMessage (const juce::String& messageText)
 
 void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
 {
+    if (!pluginManager)
+        return;
     // The Python program send to address `analyze_library` with number 1 that
     // indicates the audio feature has been added
     if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "analyze_library")
@@ -235,7 +242,7 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
         // will reset the meta data automatically
         int numParamsToSet = (message.size()-2) / 2;
         for (int i=2; i<numParamsToSet*2+2; i+=2)
-            pluginManger.setPluginParameter(message[i].getInt32(), message[i + 1].getFloat32());
+            pluginManager->setPluginParameter(message[i].getInt32(), message[i + 1].getFloat32());
 
         juce::StringArray descriptorArray;
         std::unordered_set<juce::String> descriptors;
@@ -245,7 +252,7 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
         for (auto &descriptor : descriptorArray)
             descriptors.insert(descriptor);
 
-        pluginManger.setTimbreDescriptors(descriptors);
+        pluginManager->setTimbreDescriptors(descriptors);
 
         // when it comes to this stage, all the states of the preset have been set,
         // so the next step is to save the preset
@@ -257,6 +264,6 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
 
         ++presetCounter;
         // NOTE: this path is temporary and fixed
-        pluginManger.savePreset(absolutePath);
+        pluginManager->savePreset(absolutePath);
     }
 }

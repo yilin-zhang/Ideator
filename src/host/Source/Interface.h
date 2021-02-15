@@ -44,7 +44,7 @@ class Interface : public juce::Component,
                   private juce::MidiKeyboardState::Listener
 {
 public:
-    Interface(ProcessorManager&);
+    Interface(ProcessorManager&, OSCManager&);
     ~Interface();
 
     void paint (juce::Graphics&) override;
@@ -52,6 +52,7 @@ public:
 
 private:
     ProcessorManager& processorManager;
+    OSCManager& oscManager;
     juce::Component::SafePointer<PluginWindow> pluginWindow;
 
     void initializeComponents();

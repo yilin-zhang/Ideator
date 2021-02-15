@@ -11,6 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include <unordered_set>
+#include "Utils.h"
 
 class PluginManagerIf
 {
@@ -34,5 +35,6 @@ public:
     virtual void setPresetPath(const juce::String &path) = 0;
     virtual const juce::String& getPresetPath() const = 0;
     virtual bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) = 0;
+    virtual void setOSCManager(OSCManager* oscManager) = 0;
 };
 

@@ -21,6 +21,7 @@ public:
     PluginManager();
     virtual ~PluginManager();
     // methods for the plugin
+    void setOSCManager(OSCManager* oscManager) override;
     bool loadPlugin(const juce::String& path) override;
     const juce::String& getPluginPath() const override;
     bool checkPluginLoaded() const override;
@@ -69,5 +70,5 @@ private:
     juce::Array<juce::String> presetPathsInLibrary;
     int numPresetAnalyzed;
 
-    OSCManager oscManager;
+    OSCManager* oscManager;
 };

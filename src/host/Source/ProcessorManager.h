@@ -51,6 +51,7 @@ public:
     void setPresetPath(const juce::String &path) override;
     const juce::String& getPresetPath() const override;
     bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
+    void setOSCManager(OSCManager* oscManager) override;
 
 private:
 #ifdef IDEATOR_APP

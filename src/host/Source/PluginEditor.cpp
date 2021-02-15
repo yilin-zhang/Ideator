@@ -13,8 +13,13 @@
 
 //==============================================================================
 PluginEditor::PluginEditor (PluginProcessor& p)
-        : AudioProcessorEditor (&p), processorManager(p), interface(processorManager)
+        : AudioProcessorEditor (&p), processorManager(p), interface(processorManager, oscManager)
 {
+    // Must set the OSC manager at the beginning. There is an OSCManager in the audio processor, but
+    // there is no way to change the constructor of PluginProcessor (at least it seems like) and we
+    // don't take care of the initialization of it, so the only way is to pass the oscManager as a pointer.
+    processorManager.setOSCManager(&oscManager);
+
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (interface.getWidth(), interface.getHeight());

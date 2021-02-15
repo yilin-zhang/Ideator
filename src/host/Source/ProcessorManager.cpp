@@ -131,3 +131,8 @@ bool ProcessorManager::analyzeLibrary(const juce::Array<juce::String>& presetPat
 {
     return audioProcessor.analyzeLibrary(presetPaths);
 }
+
+void ProcessorManager::setOSCManager(OSCManager *oscManager)
+{
+    audioProcessor.setOSCManager(oscManager);
+}

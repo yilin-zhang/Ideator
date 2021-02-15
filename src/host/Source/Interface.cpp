@@ -121,8 +121,9 @@ const juce::Array<juce::String>& PresetTableModel::getLibraryPresetPaths() const
 // Interface
 // ================================================
 
-Interface::Interface(ProcessorManager& pm) :
+Interface::Interface(ProcessorManager& pm, OSCManager& oscManager) :
         processorManager(pm),
+        oscManager(oscManager),
         midiKeyboard(keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     // Make sure you set the size of the component after

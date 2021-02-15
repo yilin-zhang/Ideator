@@ -74,14 +74,15 @@ class OSCManager: private juce::OSCReceiver,
                   private juce::OSCReceiver::ListenerWithOSCAddress<juce::OSCReceiver::MessageLoopCallback>
 {
 public:
-    OSCManager(PluginManager &pm);
+    OSCManager();
+    void setPluginManager(PluginManager *pm);
     void prepareToAnalyzeAudio(const juce::String& presetPath, const std::unordered_set<juce::String>& descriptors);
     void finishAnalyzeAudio();
 
     // other class should NOT call any method of the broadcaster other than addListener
     juce::ChangeBroadcaster analysisFinishedBroadcaster;
 private:
-    PluginManager &pluginManger;
+    PluginManager *pluginManager;
     int presetCounter;
     juce::OSCSender oscSender;
 
