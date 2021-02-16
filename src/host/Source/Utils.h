@@ -76,15 +76,25 @@ class OSCManager: private juce::OSCReceiver,
 public:
     OSCManager();
     void setPluginManager(PluginManager *pm);
+
+    // The following methods should only be called in the interface
+    void sendRequestForPresetRetrieval(const juce::String &tags);
+
+    // The following methods should only be called in PluginManager
     void prepareToAnalyzeAudio(const juce::String& presetPath, const std::unordered_set<juce::String>& descriptors);
     void finishAnalyzeAudio();
 
-    // other class should NOT call any method of the broadcaster other than addListener
+    // the following method should only be called in Interface
+    const juce::StringArray& getSelectedPresetPaths();
+
+    // other class should NOT call any method of the broadcasters other than addListener
     juce::ChangeBroadcaster analysisFinishedBroadcaster;
+    juce::ChangeBroadcaster selectedPresetsReadyBroadcaster;
 private:
     PluginManager *pluginManager;
     int presetCounter;
     juce::OSCSender oscSender;
+    juce::StringArray selectedPresetPaths;
 
     static void showConnectionErrorMessage (const juce::String& messageText);
     void oscMessageReceived (const juce::OSCMessage& message) override;

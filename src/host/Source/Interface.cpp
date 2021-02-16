@@ -99,7 +99,6 @@ void PresetTableModel::clear()
     presetPaths.clear();
     presetTable.selectRow(0);
     presetTable.updateContent();
-    sendChangeMessage();
 }
 
 const juce::String& PresetTableModel::getPluginPath() const
@@ -132,6 +131,7 @@ Interface::Interface(ProcessorManager& pm, OSCManager& oscManager) :
 
     initializeComponents();
 
+    oscManager.selectedPresetsReadyBroadcaster.addChangeListener(this);
     presetList.addChangeListener(this);
 }
 
@@ -250,6 +250,29 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
             return;
         }
     }
+
+    else if (source == &oscManager.selectedPresetsReadyBroadcaster)
+    {
+        //auto selectedPaths = oscManager.getSelectedPresetPaths();
+        presetList.clear();
+
+        for (const auto &path : oscManager.getSelectedPresetPaths())
+        {
+            juce::File file(path); // the path is already a absolute path
+            auto xmlPreset = juce::XmlDocument::parse(file);
+            if (!xmlPreset)
+                return;
+
+            juce::String pluginPath;
+            std::unordered_set<juce::String> descriptors;
+            juce::Array<std::pair<int, float>> parameters;
+            auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, pluginPath, descriptors);
+            if (!isSuccessful)
+                continue;
+
+            presetList.addItem(pluginPath, path, descriptors);
+        }
+    }
 }
 
 void Interface::labelTextChanged(juce::Label *labelThatHasChanged)
@@ -344,7 +367,7 @@ void Interface::analyzeLibraryButtonClicked()
 
 void Interface::searchButtonClicked()
 {
-    auto tags = getTags();
+    oscManager.sendRequestForPresetRetrieval(tagInputBox.getText());
 }
 
 void Interface::loadPresetButtonClicked()
@@ -408,11 +431,3 @@ void Interface::savePresetButtonClicked()
     }
 }
 
-juce::StringArray Interface::getTags() const
-{
-    juce::StringArray inputTags;
-    inputTags.addTokens(tagInputBox.getText(), ", &", "\"");
-    inputTags.removeEmptyStrings(true);
-
-    return inputTags;
-}

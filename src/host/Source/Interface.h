@@ -83,9 +83,7 @@ private:
     juce::TextButton setLibraryButton { "Set Library" };
     void setLibraryButtonClicked();
     // input box
-    juce::Value tagInputValue;
     juce::TextEditor tagInputBox {"tagInput"};
-    juce::StringArray getTags() const;
     // search button
     juce::TextButton searchButton {"Search"};
     void searchButtonClicked();

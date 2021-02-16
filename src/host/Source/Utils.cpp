@@ -168,6 +168,9 @@ OSCManager::OSCManager():presetCounter(0)
                                     juce::String(OSC_RECEIVE_PORT) + ".");
 
     addListener(this, OSC_RECEIVE_PATTERN + "analyze_library");
+    addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/start");
+    addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/send");
+    addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/end");
 
     // for parsing JSON dataset
     addListener(this, OSC_RECEIVE_PATTERN + "json_patch");
@@ -178,6 +181,12 @@ OSCManager::OSCManager():presetCounter(0)
 void OSCManager::setPluginManager(PluginManager *pm)
 {
     pluginManager = pm;
+}
+
+void OSCManager::sendRequestForPresetRetrieval(const juce::String &inputString)
+{
+    juce::OSCMessage msgRetrievePresets(OSC_SEND_PATTERN + "retrieve_presets", inputString);
+    oscSender.send(msgRetrievePresets);
 }
 
 void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
@@ -204,7 +213,11 @@ void OSCManager::finishAnalyzeAudio()
     oscSender.send(msgAnalyzeLibrary);
 }
 
-// other class should NOT call any method of the broadcaster other than addListener
+const juce::StringArray& OSCManager::getSelectedPresetPaths()
+{
+    return selectedPresetPaths;
+}
+
 void OSCManager::showConnectionErrorMessage (const juce::String& messageText)
 {
     juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::WarningIcon,
@@ -217,6 +230,7 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
 {
     if (!pluginManager)
         return;
+
     // The Python program send to address `analyze_library` with number 1 that
     // indicates the audio feature has been added
     if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "analyze_library")
@@ -225,6 +239,18 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
         // inform other parts that the last audio buffer has been processed
         analysisFinishedBroadcaster.sendChangeMessage();
     }
+
+    // This section is for preset retrieval
+    else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "retrieve_presets/start")
+            .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+        selectedPresetPaths.clear();
+    else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "retrieve_presets/send")
+            .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+        selectedPresetPaths.add(message[0].getString());
+    else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "retrieve_presets/end")
+            .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+        selectedPresetsReadyBroadcaster.sendChangeMessage();
+
     // NOTE: This chunk of code is for JSON-to-XML conversion (users should not use it)
     // When it receives a preset from the Python program, save it.
     else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "json_patch")
