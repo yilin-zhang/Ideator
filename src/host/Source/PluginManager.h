@@ -19,7 +19,7 @@ class PluginManager : public PluginManagerIf,
 {
 public:
     PluginManager();
-    virtual ~PluginManager();
+    ~PluginManager() override;
     // methods for the plugin
     void setOSCManager(OSCManager* oscManager) override;
     bool loadPlugin(const juce::String& path) override;
