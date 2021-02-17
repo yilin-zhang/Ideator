@@ -52,6 +52,7 @@ public:
     const juce::String& getPresetPath() const override;
     bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
     void setOSCManager(OSCManager* oscManager) override;
+    void findSimilar() override;
 
 private:
 #ifdef IDEATOR_APP

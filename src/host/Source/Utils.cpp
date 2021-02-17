@@ -213,6 +213,12 @@ void OSCManager::finishAnalyzeAudio()
     oscSender.send(msgAnalyzeLibrary);
 }
 
+void OSCManager::prepareToFindSimilar()
+{
+    juce::OSCMessage msgFindSimilar(OSC_SEND_PATTERN + "find_similar", 1);
+    oscSender.send(msgFindSimilar);
+}
+
 const juce::StringArray& OSCManager::getSelectedPresetPaths()
 {
     return selectedPresetPaths;

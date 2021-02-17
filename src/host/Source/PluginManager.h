@@ -40,6 +40,7 @@ public:
     void setPresetPath(const juce::String &path) override;
     const juce::String& getPresetPath() const override;
     bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
+    void findSimilar() override;
 
 protected:
     std::unique_ptr<juce::AudioPluginInstance> plugin;

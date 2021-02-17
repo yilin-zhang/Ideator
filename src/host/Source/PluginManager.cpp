@@ -355,6 +355,12 @@ bool PluginManager::analyzeLibrary(const juce::Array<juce::String>& presetPaths)
     return analyzeNextPresetInLibrary();
 }
 
+void PluginManager::findSimilar()
+{
+    oscManager->prepareToFindSimilar();
+    sendAudio();
+}
+
 bool PluginManager::analyzeNextPresetInLibrary()
 {
     if (!oscManager)

@@ -87,6 +87,9 @@ private:
     // search button
     juce::TextButton searchButton {"Search"};
     void searchButtonClicked();
+    // find similar button
+    juce::TextButton findSimilarButton {"Similar"};
+    void findSimilarButtonClicked();
     // plugin name
     juce::Label synthNameLabel;
     // status label

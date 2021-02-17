@@ -136,3 +136,8 @@ void ProcessorManager::setOSCManager(OSCManager *oscManager)
 {
     audioProcessor.setOSCManager(oscManager);
 }
+
+void ProcessorManager::findSimilar()
+{
+    audioProcessor.findSimilar();
+}

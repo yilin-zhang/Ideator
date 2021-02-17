@@ -83,6 +83,7 @@ public:
     // The following methods should only be called in PluginManager
     void prepareToAnalyzeAudio(const juce::String& presetPath, const std::unordered_set<juce::String>& descriptors);
     void finishAnalyzeAudio();
+    void prepareToFindSimilar();
 
     // the following method should only be called in Interface
     const juce::StringArray& getSelectedPresetPaths();

@@ -36,5 +36,6 @@ public:
     virtual const juce::String& getPresetPath() const = 0;
     virtual bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) = 0;
     virtual void setOSCManager(OSCManager* oscManager) = 0;
+    virtual void findSimilar() = 0;
 };
 

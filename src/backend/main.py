@@ -48,7 +48,7 @@ class PresetRetriever:
         self._feature_matrix = np.array([])
         self.load_cache(cache_path)
 
-    def retrieve_presets(self, keywords: str) -> List[str]:
+    def retrieve_presets_by_keywords(self, keywords: str) -> List[str]:
         # split the keyword string
         keyword_list = re.split('[^a-zA-Z]+', keywords)
         # simply find the presets that contains the keywords
@@ -57,6 +57,12 @@ class PresetRetriever:
             if all(word in descriptor_list for word in keyword_list):
                 selected_paths.append(self._preset_paths[idx])
         return selected_paths
+
+    def retrieve_presets_by_features(self, latent: np.array) -> List[str]:
+        dist = np.linalg.norm(latent - self._feature_matrix, axis=1)
+        min_dists_ind = list(np.argsort(dist)[:5])
+        selected_presets = [self._preset_paths[i] for i in min_dists_ind]
+        return selected_presets
 
     def load_cache(self, cache_path: str) -> None:
         if os.path.isfile(cache_path):
@@ -74,7 +80,7 @@ class PresetRetriever:
 def analyze_library_callback(address: str,
                              args: List[Any],
                              *osc_args: List[Any]) -> None:
-    client, library_receiver, udp_buffer_receiver = args
+    client, library_receiver, udp_buffer_receiver, preset_retriever = args
     value = osc_args[0]
     preset_path = osc_args[1]
     descriptors = osc_args[2]
@@ -91,7 +97,29 @@ def analyze_library_callback(address: str,
     elif value == 2:
         print('All presets received, dumping...')
         library_receiver.save_library_info()
+        preset_retriever.load_cache('./cache/preset_lib.pkl')
         print('Finished')
+
+
+def find_similar_callback(address: str,
+                          args: List[Any],
+                          *osc_args: List[Any]) -> None:
+    client, udp_buffer_receiver, feature_extractor, preset_retriever = args
+    value = osc_args[0]
+    # receive a buffer
+    buffer = udp_buffer_receiver.receive()
+    buffer = torch.from_numpy(buffer)
+    buffer = buffer.reshape((1, -1))
+    # extract latent features
+    preset_feature = feature_extractor.encode(buffer)
+    preset_feature = preset_feature.reshape(preset_feature.shape[1])
+    # retrieve presets
+    selected_paths = preset_retriever.retrieve_presets_by_features(preset_feature)
+
+    client.send_message('/Ideator/cpp/retrieve_presets/start', 1)
+    for path in selected_paths:
+        client.send_message('/Ideator/cpp/retrieve_presets/send', path)
+    client.send_message('/Ideator/cpp/retrieve_presets/end', 1)
 
 
 def retrieve_presets_callback(address: str,
@@ -99,7 +127,7 @@ def retrieve_presets_callback(address: str,
                               *osc_args: List[Any]) -> None:
     client, preset_retriever = args
     tag_string = str(osc_args[0])
-    selected_paths = preset_retriever.retrieve_presets(tag_string)
+    selected_paths = preset_retriever.retrieve_presets_by_keywords(tag_string)
 
     client.send_message('/Ideator/cpp/retrieve_presets/start', 1)
     for path in selected_paths:
@@ -115,8 +143,11 @@ if __name__ == "__main__":
     library_receiver = LibraryReceiver(feature_extractor)
     preset_retriever = PresetRetriever('./cache/preset_lib.pkl')
 
-    dispatcher.map("/Ideator/python/analyze_library", analyze_library_callback, client, library_receiver, udp_buffer_receiver)
+    dispatcher.map("/Ideator/python/analyze_library", analyze_library_callback,
+                   client, library_receiver, udp_buffer_receiver, preset_retriever)
     dispatcher.map("/Ideator/python/retrieve_presets", retrieve_presets_callback, client, preset_retriever)
+    dispatcher.map("/Ideator/python/find_similar", find_similar_callback, client,
+                   udp_buffer_receiver, feature_extractor, preset_retriever)
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 7777), dispatcher)
     print("Serving on {}".format(server.server_address))

@@ -175,6 +175,7 @@ void Interface::resized()
     juce::Rectangle<int> inputBoxArea (160,10,200, 30);
     juce::Rectangle<int> presetListArea (160,45,200, 300);
     juce::Rectangle<int> searchButtonArea (370,10,70, 30);
+    juce::Rectangle<int> findSimilarButtonArea (370,45,70, 30);
     const int keyboardMargin = 10;
     juce::Rectangle<int> keyboardArea (keyboardMargin,getHeight()-64-keyboardMargin,
                                        getWidth() - 2 * keyboardMargin, 64);
@@ -184,6 +185,7 @@ void Interface::resized()
     setLibraryButton.setBounds(setLibraryButtonArea);
     analyzeLibraryButton.setBounds(analyzeLibraryButtonArea);
     searchButton.setBounds(searchButtonArea);
+    findSimilarButton.setBounds(findSimilarButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
     tagInputBox.setBounds(inputBoxArea);
@@ -207,6 +209,9 @@ void Interface::initializeComponents()
 
     searchButton.onClick = [this] {searchButtonClicked(); };
     addAndMakeVisible(searchButton);
+
+    findSimilarButton.onClick = [this] {findSimilarButtonClicked(); };
+    addAndMakeVisible(findSimilarButton);
 
     loadPresetButton.onClick = [this] {loadPresetButtonClicked(); };
     addAndMakeVisible(loadPresetButton);
@@ -368,6 +373,11 @@ void Interface::analyzeLibraryButtonClicked()
 void Interface::searchButtonClicked()
 {
     oscManager.sendRequestForPresetRetrieval(tagInputBox.getText());
+}
+
+void Interface::findSimilarButtonClicked()
+{
+    processorManager.findSimilar();
 }
 
 void Interface::loadPresetButtonClicked()
