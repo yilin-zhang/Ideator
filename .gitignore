@@ -4,3 +4,4 @@ src/host/JuceLibraryCode
 src/backend/__pycache__/
 src/backend/.idea/
 src/backend/cache
+src/backend/glove

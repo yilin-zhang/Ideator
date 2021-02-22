@@ -1,11 +1,13 @@
 from typing import List, Any, Tuple
 from pathlib import Path
+from collections import defaultdict
 import pickle
 import re
 import os
 
 import torch
 import numpy as np
+import bcolz
 
 from pythonosc import udp_client
 from pythonosc import osc_server
@@ -46,16 +48,30 @@ class PresetRetriever:
         self._preset_descriptors = []
         self._feature_matrix = []
         self._feature_matrix = np.array([])
+        self._glove = {}
         self.load_cache(cache_path)
+        self.load_glove()
 
     def retrieve_presets_by_keywords(self, keywords: str) -> List[str]:
         # split the keyword string
         keyword_list = re.split('[^a-zA-Z]+', keywords)
-        # simply find the presets that contains the keywords
-        selected_paths = []
+        input_vector_list = [self._glove[keyword.lower()] for keyword in keyword_list]
+        weights = []
         for idx, descriptor_list in enumerate(self._preset_descriptors):
-            if all(word in descriptor_list for word in keyword_list):
-                selected_paths.append(self._preset_paths[idx])
+            # Match each input keyword to every descriptor in a preset and find the max similarity
+            # value (measured by cosine), and take the sum of the max similarities.
+            weight = 0
+            for input_vector in input_vector_list:
+                # find the max cos value
+                max_cos = max([self._cosine_similarity(input_vector, self._glove[descriptor.lower()])
+                               for descriptor in descriptor_list])
+                weight += max_cos
+            weights.append(weight)
+
+        weights = np.array(weights)
+        max_weights_ind = list(np.argsort(weights)[-5:])
+        selected_paths = [self._preset_paths[i] for i in max_weights_ind]
+
         return selected_paths
 
     def retrieve_presets_by_features(self, latent: np.array) -> List[str]:
@@ -75,6 +91,18 @@ class PresetRetriever:
                 feature = library_info[preset_path]['feature']
                 feature_list.append(feature.reshape(feature.shape[1]))
             self._feature_matrix = torch.tensor(feature_list).numpy()
+
+    def load_glove(self) -> None:
+        glove_path = './glove'
+        word_vectors = bcolz.open(f'{glove_path}/6B.50.dat')[:]
+        words = pickle.load(open(f'{glove_path}/6B.50_words.pkl', 'rb'))
+        word2idx = pickle.load(open(f'{glove_path}/6B.50_idx.pkl', 'rb'))
+        self._glove = defaultdict(lambda: np.ones(50) * np.sqrt(1/50), {w: word_vectors[word2idx[w]] for w in words})
+
+    @staticmethod
+    def _cosine_similarity(a, b) -> float:
+        cos_sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+        return cos_sim
 
 
 def analyze_library_callback(address: str,
