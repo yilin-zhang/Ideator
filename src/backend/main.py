@@ -56,21 +56,23 @@ class PresetRetriever:
         # split the keyword string
         keyword_list = re.split('[^a-zA-Z]+', keywords)
         input_vector_list = [self._glove[keyword.lower()] for keyword in keyword_list]
+
+        # Match each input keyword to every descriptor in a preset and find the max similarity
+        # value (measured by cosine), and take the sum of the max similarities.
         weights = []
         for idx, descriptor_list in enumerate(self._preset_descriptors):
-            # Match each input keyword to every descriptor in a preset and find the max similarity
-            # value (measured by cosine), and take the sum of the max similarities.
             weight = 0
             for input_vector in input_vector_list:
-                # find the max cos value
                 max_cos = max([self._cosine_similarity(input_vector, self._glove[descriptor.lower()])
                                for descriptor in descriptor_list])
                 weight += max_cos
             weights.append(weight)
-
         weights = np.array(weights)
-        max_weights_ind = list(np.argsort(weights)[-5:])
-        selected_paths = [self._preset_paths[i] for i in max_weights_ind]
+
+        # randomly pick 5 presets according to the weights
+        weights = (weights - weights.min()) / (weights - weights.min()).sum()  # normalize it to make it sum to 1
+        randomly_picked_ind = np.random.choice(np.arange(len(weights)), size=5, p=weights)
+        selected_paths = [self._preset_paths[i] for i in randomly_picked_ind]
 
         return selected_paths
 
