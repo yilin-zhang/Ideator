@@ -141,3 +141,8 @@ void ProcessorManager::findSimilar()
 {
     audioProcessor.findSimilar();
 }
+
+bool ProcessorManager::autoTag()
+{
+    return audioProcessor.autoTag();
+}

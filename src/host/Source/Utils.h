@@ -81,22 +81,30 @@ public:
     void sendRequestForPresetRetrieval(const juce::String &tags);
 
     // The following methods should only be called in PluginManager
-    void prepareToAnalyzeAudio(const juce::String& presetPath, const std::unordered_set<juce::String>& descriptors);
+    void prepareToAnalyzeAudio(const juce::String& presetPath,
+                               const std::unordered_set<juce::String>& descriptors);
     void finishAnalyzeAudio();
     void prepareToFindSimilar();
+    void prepareToAutoTag();
+    void changeDescriptors(const juce::String& presetPath,
+                           const std::unordered_set<juce::String>& descriptors);
 
-    // the following method should only be called in Interface
+    // the following methods should only be called in Interface
     const juce::StringArray& getSelectedPresetPaths();
+    const juce::StringArray& getAutoTags();
 
     // other class should NOT call any method of the broadcasters other than addListener
     juce::ChangeBroadcaster analysisFinishedBroadcaster;
     juce::ChangeBroadcaster selectedPresetsReadyBroadcaster;
+    juce::ChangeBroadcaster autoTagsReadyBroadcaster;
 private:
     PluginManager *pluginManager;
     int presetCounter;
     juce::OSCSender oscSender;
     juce::StringArray selectedPresetPaths;
+    juce::StringArray autoTags;
 
+    static juce::String formDescriptorString(const std::unordered_set<juce::String>& descriptors);
     static void showConnectionErrorMessage (const juce::String& messageText);
     void oscMessageReceived (const juce::OSCMessage& message) override;
 };

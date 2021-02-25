@@ -82,14 +82,18 @@ private:
     // set preset library path
     juce::TextButton setLibraryButton { "Set Library" };
     void setLibraryButtonClicked();
-    // input box
+    // input boxes
     juce::TextEditor tagInputBox {"tagInput"};
+    juce::TextEditor tagEditInputBox{"tagEdit"};
+    void changeDescriptors();
     // search button
     juce::TextButton searchButton {"Search"};
     void searchButtonClicked();
     // find similar button
     juce::TextButton findSimilarButton {"Similar"};
     void findSimilarButtonClicked();
+    juce::TextButton autoTagButton {"Auto Tag"};
+    void autoTagButtonClicked();
     // plugin name
     juce::Label synthNameLabel;
     // status label

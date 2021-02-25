@@ -171,6 +171,7 @@ OSCManager::OSCManager():presetCounter(0)
     addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/start");
     addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/send");
     addListener(this, OSC_RECEIVE_PATTERN + "retrieve_presets/end");
+    addListener(this, OSC_RECEIVE_PATTERN + "auto_tag");
 
     // for parsing JSON dataset
     addListener(this, OSC_RECEIVE_PATTERN + "json_patch");
@@ -185,12 +186,55 @@ void OSCManager::setPluginManager(PluginManager *pm)
 
 void OSCManager::sendRequestForPresetRetrieval(const juce::String &inputString)
 {
-    juce::OSCMessage msgRetrievePresets(OSC_SEND_PATTERN + "retrieve_presets", inputString);
-    oscSender.send(msgRetrievePresets);
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "retrieve_presets", inputString);
+    oscSender.send(msg);
 }
 
 void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
                                        const std::unordered_set<juce::String>& descriptors)
+{
+    juce::String descriptorString = formDescriptorString(descriptors);
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "analyze_library", 1, presetPath, descriptorString);
+    oscSender.send(msg);
+}
+
+void OSCManager::finishAnalyzeAudio()
+{
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "analyze_library", 2, juce::String(""), juce::String(""));
+    oscSender.send(msg);
+}
+
+void OSCManager::prepareToFindSimilar()
+{
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "find_similar", 1);
+    oscSender.send(msg);
+}
+
+void OSCManager::prepareToAutoTag()
+{
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "auto_tag", 1);
+    oscSender.send(msg);
+}
+
+const juce::StringArray& OSCManager::getSelectedPresetPaths()
+{
+    return selectedPresetPaths;
+}
+
+const juce::StringArray& OSCManager::getAutoTags()
+{
+    return autoTags;
+}
+
+void OSCManager::changeDescriptors(const juce::String& presetPath,
+                                   const std::unordered_set<juce::String>& descriptors)
+{
+    juce::String descriptorString = formDescriptorString(descriptors);
+    juce::OSCMessage msg(OSC_SEND_PATTERN + "change_descriptors", presetPath, descriptorString);
+    oscSender.send(msg);
+}
+
+juce::String OSCManager::formDescriptorString(const std::unordered_set<juce::String> &descriptors)
 {
     // form a string of descriptors, use "," as the separator
     juce::String descriptorString;
@@ -203,25 +247,7 @@ void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
         ++idx;
     }
 
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 1, presetPath, descriptorString);
-    oscSender.send(msgAnalyzeLibrary);
-}
-
-void OSCManager::finishAnalyzeAudio()
-{
-    juce::OSCMessage msgAnalyzeLibrary(OSC_SEND_PATTERN + "analyze_library", 2, juce::String(""), juce::String(""));
-    oscSender.send(msgAnalyzeLibrary);
-}
-
-void OSCManager::prepareToFindSimilar()
-{
-    juce::OSCMessage msgFindSimilar(OSC_SEND_PATTERN + "find_similar", 1);
-    oscSender.send(msgFindSimilar);
-}
-
-const juce::StringArray& OSCManager::getSelectedPresetPaths()
-{
-    return selectedPresetPaths;
+    return descriptorString;
 }
 
 void OSCManager::showConnectionErrorMessage (const juce::String& messageText)
@@ -256,6 +282,17 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
     else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "retrieve_presets/end")
             .matches(juce::OSCAddress(message.getAddressPattern().toString())))
         selectedPresetsReadyBroadcaster.sendChangeMessage();
+
+    // This section is for auto-tagging
+    else if (juce::OSCAddressPattern(OSC_RECEIVE_PATTERN + "auto_tag")
+            .matches(juce::OSCAddress(message.getAddressPattern().toString())))
+    {
+        autoTags.clear();
+        for (const auto &msg : message)
+            autoTags.add(msg.getString());
+        autoTagsReadyBroadcaster.sendChangeMessage();
+        std::cout << "tags received" << std::endl;
+    }
 
     // NOTE: This chunk of code is for JSON-to-XML conversion (users should not use it)
     // When it receives a preset from the Python program, save it.

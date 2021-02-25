@@ -132,6 +132,7 @@ Interface::Interface(ProcessorManager& pm, OSCManager& oscManager) :
     initializeComponents();
 
     oscManager.selectedPresetsReadyBroadcaster.addChangeListener(this);
+    oscManager.autoTagsReadyBroadcaster.addChangeListener(this);
     presetList.addChangeListener(this);
 }
 
@@ -172,10 +173,13 @@ void Interface::resized()
                                           buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> statusLabelArea (10, 220,
                                           buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> inputBoxArea (160,10,200, 30);
-    juce::Rectangle<int> presetListArea (160,45,200, 300);
+    juce::Rectangle<int> tagInputBoxArea (160, 10, 200, 30);
+    juce::Rectangle<int> presetListArea (160,45,200, 250);
+    juce::Rectangle<int> tagEditInputBoxArea (160, 300, 200, 30);
     juce::Rectangle<int> searchButtonArea (370,10,70, 30);
     juce::Rectangle<int> findSimilarButtonArea (370,45,70, 30);
+    juce::Rectangle<int> autoTagButtonArea (370,80,70, 30);
+
     const int keyboardMargin = 10;
     juce::Rectangle<int> keyboardArea (keyboardMargin,getHeight()-64-keyboardMargin,
                                        getWidth() - 2 * keyboardMargin, 64);
@@ -186,13 +190,15 @@ void Interface::resized()
     analyzeLibraryButton.setBounds(analyzeLibraryButtonArea);
     searchButton.setBounds(searchButtonArea);
     findSimilarButton.setBounds(findSimilarButtonArea);
+    autoTagButton.setBounds(autoTagButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
-    tagInputBox.setBounds(inputBoxArea);
+    tagInputBox.setBounds(tagInputBoxArea);
     synthNameLabel.setBounds(synthNameLabelArea);
     timbreLabel.setBounds(timbreLabelArea);
     statusLabel.setBounds(statusLabelArea);
     presetList.setBounds(presetListArea);
+    tagEditInputBox.setBounds(tagEditInputBoxArea);
     midiKeyboard.setBounds(keyboardArea);
 }
 
@@ -213,6 +219,9 @@ void Interface::initializeComponents()
     findSimilarButton.onClick = [this] {findSimilarButtonClicked(); };
     addAndMakeVisible(findSimilarButton);
 
+    autoTagButton.onClick = [this] {autoTagButtonClicked(); };
+    addAndMakeVisible(autoTagButton);
+
     loadPresetButton.onClick = [this] {loadPresetButtonClicked(); };
     addAndMakeVisible(loadPresetButton);
 
@@ -223,6 +232,7 @@ void Interface::initializeComponents()
     addAndMakeVisible(setLibraryButton);
 
     addAndMakeVisible(tagInputBox);
+    addAndMakeVisible(tagEditInputBox);
     addAndMakeVisible(presetList);
 
     synthNameLabel.addListener(this);
@@ -277,6 +287,12 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 
             presetList.addItem(pluginPath, path, descriptors);
         }
+    }
+
+    else if (source == &oscManager.autoTagsReadyBroadcaster)
+    {
+        auto autoTags = oscManager.getAutoTags();
+        tagEditInputBox.setText(autoTags.joinIntoString(", "));
     }
 }
 
@@ -380,6 +396,11 @@ void Interface::findSimilarButtonClicked()
     processorManager.findSimilar();
 }
 
+void Interface::autoTagButtonClicked()
+{
+    processorManager.autoTag();
+}
+
 void Interface::loadPresetButtonClicked()
 {
     juce::FileChooser fileChooser("Select the path", {});
@@ -441,3 +462,11 @@ void Interface::savePresetButtonClicked()
     }
 }
 
+void Interface::changeDescriptors()
+{
+    // 1. get the preset that is being selected
+
+    // 2. get the timbre descriptors from the input box
+
+    // 3. call the corresponding method in processorManager
+}

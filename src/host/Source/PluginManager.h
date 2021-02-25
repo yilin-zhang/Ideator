@@ -35,6 +35,9 @@ public:
     void sendAudio() override;
     bool loadPreset(const juce::String &presetPath) override;
     bool savePreset(const juce::String &presetPath) override;
+    bool autoTag() override;
+    bool changeDescriptors(const juce::String &presetPath,
+                           const std::unordered_set<juce::String> &newDescriptors);
     void setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors) override;
     const std::unordered_set<juce::String>& getTimbreDescriptors() const override;
     void setPresetPath(const juce::String &path) override;

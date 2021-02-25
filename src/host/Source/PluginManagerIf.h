@@ -140,5 +140,10 @@ public:
      * Finds the presets that are similar to the current patch
      */
     virtual void findSimilar() = 0;
+
+    /*!
+     * Auto-tag the current synthesizer patch
+     */
+    virtual bool autoTag() = 0;
 };
 

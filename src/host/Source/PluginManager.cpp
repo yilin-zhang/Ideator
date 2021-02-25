@@ -319,6 +319,43 @@ bool PluginManager::savePreset(const juce::String &presetPath)
     return true;
 }
 
+bool PluginManager::autoTag()
+{
+    if (!oscManager)
+        return false;
+
+    oscManager->prepareToAutoTag();
+    sendAudio();
+
+    return true;
+}
+
+bool PluginManager::changeDescriptors(const juce::String &presetPath,
+                                      const std::unordered_set<juce::String> &newDescriptors)
+{
+    // 1. update the preset file by changing the timbre descriptors in the file
+    // TODO: check if the presetPath is valid first. If not, don't send any message to Python
+
+    // We do not check if a plugin has been loaded here, because the function will
+    // load the plugin if it is not loaded.
+    juce::File inputFile(presetPath);
+    auto xmlPreset = juce::XmlDocument::parse(inputFile);
+    if (!xmlPreset)
+        return false;
+
+    // parse the preset
+    juce::String newPluginPath;
+    std::unordered_set<juce::String> descriptors;
+    juce::Array<std::pair<int, float>> parameters;
+    auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, newPluginPath, descriptors);
+    if (!isSuccessful)
+        return false;
+
+    // 2. send the OSC message to notify the Python program to update its cache
+    // sent the OSC message
+    oscManager->changeDescriptors(presetPath, newDescriptors);
+}
+
 void PluginManager::setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors)
 {
     if (!plugin)

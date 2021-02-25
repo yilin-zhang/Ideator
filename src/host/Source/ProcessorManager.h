@@ -53,6 +53,7 @@ public:
     bool analyzeLibrary(const juce::Array<juce::String>& presetPaths) override;
     void setOSCManager(OSCManager* oscManager) override;
     void findSimilar() override;
+    bool autoTag() override;
 
 private:
 #ifdef IDEATOR_APP

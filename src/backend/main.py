@@ -1,6 +1,6 @@
 from typing import List, Any, Tuple
 from pathlib import Path
-from collections import defaultdict
+from collections import defaultdict, Counter
 import pickle
 import re
 import os
@@ -52,9 +52,7 @@ class PresetRetriever:
         self.load_cache(cache_path)
         self.load_glove()
 
-    def retrieve_presets_by_keywords(self, keywords: str) -> List[str]:
-        # split the keyword string
-        keyword_list = re.split('[^a-zA-Z]+', keywords)
+    def retrieve_presets_by_keywords(self, keyword_list: List[str]) -> List[str]:
         input_vector_list = [self._glove[keyword.lower()] for keyword in keyword_list]
 
         # Match each input keyword to every descriptor in a preset and find the max similarity
@@ -79,8 +77,30 @@ class PresetRetriever:
     def retrieve_presets_by_features(self, latent: np.array) -> List[str]:
         dist = np.linalg.norm(latent - self._feature_matrix, axis=1)
         min_dists_ind = list(np.argsort(dist)[:5])
-        selected_presets = [self._preset_paths[i] for i in min_dists_ind]
-        return selected_presets
+        selected_paths = [self._preset_paths[i] for i in min_dists_ind]
+        return selected_paths
+
+    def auto_tag(self, latent: np.array) -> List[str]:
+        # KNN algorithm, returns the tags
+        k = 10
+        dist = np.linalg.norm(latent - self._feature_matrix, axis=1)
+        min_dists_ind = list(np.argsort(dist)[:k])
+        selected_descriptors = [self._preset_descriptors[i] for i in min_dists_ind]
+        selected_descriptors = [descriptor for subl in selected_descriptors for descriptor in subl] # flatten
+        # find the most frequent descriptors
+        freq_dict = dict(Counter(selected_descriptors))
+        sorted_descriptors = sorted(freq_dict, key=freq_dict.get, reverse=True)
+        # take 3 descriptors, otherwise take all
+        if len(sorted_descriptors) >= 3:
+            return sorted_descriptors[:3]
+        else:
+            return sorted_descriptors
+
+    def change_descriptors(self, path: str, descriptors: List[str]) -> None:
+        descriptors = list(map(lambda x: x.capitalize(), descriptors))  # make sure the words are capitalized
+        idx = self._preset_paths.index(path)
+        self._preset_descriptors[idx] = descriptors
+        self.save_cache('./cache/preset_lib.pkl')
 
     def load_cache(self, cache_path: str) -> None:
         if os.path.isfile(cache_path):
@@ -94,6 +114,21 @@ class PresetRetriever:
                 feature_list.append(feature.reshape(feature.shape[1]))
             self._feature_matrix = torch.tensor(feature_list).numpy()
 
+    def save_cache(self, cache_path: str) -> None:
+        library_info = {}
+        # split the feature matrix into a feature list
+        feature_list = []
+        for i in range(self._feature_matrix.shape[0]):
+            feature_list.append(self._feature_matrix[i, :].reshape(1, -1))
+
+        for path, descriptors, feature in zip(self._preset_paths, self._preset_descriptors, feature_list):
+            library_info[path] = {'descriptors': descriptors, 'feature': feature}
+
+        Path(os.path.dirname(cache_path)).mkdir(parents=True, exist_ok=True)
+        # dump the data
+        with open(cache_path, 'wb') as f:
+            pickle.dump(library_info, f)
+
     def load_glove(self) -> None:
         glove_path = './glove'
         word_vectors = bcolz.open(f'{glove_path}/6B.50.dat')[:]
@@ -102,7 +137,7 @@ class PresetRetriever:
         self._glove = defaultdict(lambda: np.ones(50) * np.sqrt(1/50), {w: word_vectors[word2idx[w]] for w in words})
 
     @staticmethod
-    def _cosine_similarity(a, b) -> float:
+    def _cosine_similarity(a: np.array, b: np.array) -> float:
         cos_sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
         return cos_sim
 
@@ -157,12 +192,44 @@ def retrieve_presets_callback(address: str,
                               *osc_args: List[Any]) -> None:
     client, preset_retriever = args
     tag_string = str(osc_args[0])
-    selected_paths = preset_retriever.retrieve_presets_by_keywords(tag_string)
+    # split the keyword string
+    keyword_list = re.split('[^a-zA-Z]+', tag_string)
+    selected_paths = preset_retriever.retrieve_presets_by_keywords(keyword_list)
 
     client.send_message('/Ideator/cpp/retrieve_presets/start', 1)
     for path in selected_paths:
         client.send_message('/Ideator/cpp/retrieve_presets/send', path)
     client.send_message('/Ideator/cpp/retrieve_presets/end', 1)
+
+
+def auto_tag_callback(address: str,
+                      args: List[Any],
+                      *osc_args: List[Any]) -> None:
+    client, udp_buffer_receiver, preset_retriever = args
+    value = osc_args[0]
+    buffer = udp_buffer_receiver.receive()
+    buffer = torch.from_numpy(buffer)
+    buffer = buffer.reshape((1, -1))
+    # extract latent features
+    preset_feature = feature_extractor.encode(buffer)
+    preset_feature = preset_feature.reshape(preset_feature.shape[1])
+    # auto_tag
+    tags = preset_retriever.auto_tag(preset_feature)
+    # send message
+    client.send_message('/Ideator/cpp/auto_tag', tags)
+
+
+def change_descriptors_callback(address: str,
+                                args: List[Any],
+                                *osc_args: List[Any]) -> None:
+    client, preset_retriever = args
+    preset_path = str(osc_args[0])
+    tag_string = str(osc_args[1])
+    print(f'preset_path: {preset_path}')
+    print(f'tag_string: {tag_string}')
+    # split the keyword string
+    keyword_list = re.split('[^a-zA-Z]+', tag_string)
+    preset_retriever.change_descriptors(preset_path, tag_string)
 
 
 if __name__ == "__main__":
@@ -178,6 +245,8 @@ if __name__ == "__main__":
     dispatcher.map("/Ideator/python/retrieve_presets", retrieve_presets_callback, client, preset_retriever)
     dispatcher.map("/Ideator/python/find_similar", find_similar_callback, client,
                    udp_buffer_receiver, feature_extractor, preset_retriever)
+    dispatcher.map("/Ideator/python/auto_tag", auto_tag_callback, client, udp_buffer_receiver, preset_retriever)
+    dispatcher.map("/Ideator/python/change_descriptors", change_descriptors_callback, client, preset_retriever)
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 7777), dispatcher)
     print("Serving on {}".format(server.server_address))
