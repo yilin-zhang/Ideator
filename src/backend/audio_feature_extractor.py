@@ -8,6 +8,9 @@ from pathlib import Path
 import os
 import shutil
 
+# set the backend for compatibility
+torchaudio.set_audio_backend("sox_io")
+
 
 class AudioFeatureExtractor:
     def __init__(self, model_path: str, map_location=torch.device('cpu')):
@@ -37,7 +40,7 @@ class AudioFeatureExtractor:
 
         # normalize
         mel = torch.log(mel + 1)
-        maxes, _ = torch.max(mel.view(mel.size(0), -1), dim=1)
+        maxes, _ = torch.max(mel.reshape(mel.size(0), -1), dim=1)
         maxes = maxes.view(maxes.size(0), 1, 1)
         mel /= maxes
 
