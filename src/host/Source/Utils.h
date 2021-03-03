@@ -30,6 +30,10 @@ public:
                       juce::Array<std::pair<int, float>> &parameters,
                       juce::String &pluginPath,
                       std::unordered_set<juce::String> &descriptors);
+
+    static juce::String descriptorsToString(const std::unordered_set<juce::String>& descriptors);
+
+    static std::unordered_set<juce::String> stringToDescriptors(const juce::String& descriptorString);
 };
 
 // ========================================
@@ -104,7 +108,6 @@ private:
     juce::StringArray selectedPresetPaths;
     juce::StringArray autoTags;
 
-    static juce::String formDescriptorString(const std::unordered_set<juce::String>& descriptors);
     static void showConnectionErrorMessage (const juce::String& messageText);
     void oscMessageReceived (const juce::OSCMessage& message) override;
 };

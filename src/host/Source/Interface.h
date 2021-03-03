@@ -29,6 +29,8 @@ public:
     const juce::String& getPluginPath() const;
     const juce::String& getPresetPath() const;
     const juce::Array<juce::String>& getLibraryPresetPaths() const;
+    juce::String getDescriptorString() const;
+    const std::unordered_set<juce::String>& getDescriptors() const;
 private:
     juce::TableListBox presetTable;
     juce::Array<juce::String> pluginPaths;
@@ -36,6 +38,7 @@ private:
     juce::Array<std::unordered_set<juce::String>> descriptors;
     juce::String currentPluginPath;
     juce::String currentPresetPath;
+    std::unordered_set<juce::String> currentDescriptors;
 };
 
 class Interface : public juce::Component,
@@ -62,6 +65,7 @@ private:
 
     // custom callbacks
     void loadPluginCallback(const juce::String &path);
+    void refreshPresetList();
 
     /// functionalities
     // load plugin
@@ -85,15 +89,16 @@ private:
     // input boxes
     juce::TextEditor tagInputBox {"tagInput"};
     juce::TextEditor tagEditInputBox{"tagEdit"};
-    void changeDescriptors();
     // search button
     juce::TextButton searchButton {"Search"};
     void searchButtonClicked();
-    // find similar button
+    // buttons on the right side
     juce::TextButton findSimilarButton {"Similar"};
     void findSimilarButtonClicked();
     juce::TextButton autoTagButton {"Auto Tag"};
     void autoTagButtonClicked();
+    juce::TextButton confirmTagButton {"Confirm"};
+    void confirmTagButtonClicked();
     // plugin name
     juce::Label synthNameLabel;
     // status label

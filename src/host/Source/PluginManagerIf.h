@@ -145,5 +145,14 @@ public:
      * Auto-tag the current synthesizer patch
      */
     virtual bool autoTag() = 0;
+
+    /*!
+     * Change the descriptors in a preset file.
+     * @param presetPath the path to the preset file
+     * @param newDescriptors the new descriptors
+     * @return
+     */
+    virtual bool changeDescriptors(const juce::String &presetPath,
+                                   const std::unordered_set<juce::String> &newDescriptors) = 0;
 };
 

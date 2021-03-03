@@ -53,19 +53,7 @@ void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId
         g.drawFittedText(presetPaths[rowNumber], {6, 0, width - 12, height}, juce::Justification::centredLeft, 1, 1.f);
     else
     {
-        juce::String descriptorString;
-        auto descriptorOfThisRow = descriptors[rowNumber];
-        auto descriptorIter = descriptorOfThisRow.begin();
-        for (int i=0; i<descriptors[rowNumber].size(); ++i)
-        {
-            juce::String descriptor = *descriptorIter;
-            if (i == 0)
-                descriptorString << descriptor;
-            else
-                descriptorString << ", " << descriptor;
-            ++descriptorIter;
-        }
-
+        auto descriptorString = PresetManager::descriptorsToString(descriptors[rowNumber]);
         g.drawFittedText(descriptorString, {6,0,width - 12,height}, juce::Justification::centredLeft, 1, 1.f);
     }
 
@@ -75,6 +63,7 @@ void PresetTableModel::cellClicked (int rowNumber, int columnId, const juce::Mou
 {
     currentPresetPath = presetPaths[rowNumber];
     currentPluginPath = pluginPaths[rowNumber];
+    currentDescriptors = descriptors[rowNumber];
     sendChangeMessage();
 }
 
@@ -89,7 +78,7 @@ void PresetTableModel::addItem(const juce::String &pluginPath, const juce::Strin
     this->descriptors.add(descriptors);
     this->presetPaths.add(presetPath);
     presetTable.updateContent();
-    presetTable.selectRow(getNumRows() - 1);
+    // presetTable.selectRow(getNumRows() - 1);
 }
 
 void PresetTableModel::clear()
@@ -114,6 +103,28 @@ const juce::String& PresetTableModel::getPresetPath() const
 const juce::Array<juce::String>& PresetTableModel::getLibraryPresetPaths() const
 {
     return presetPaths;
+}
+
+juce::String PresetTableModel::getDescriptorString() const
+{
+    juce::String descriptorString;
+    auto descriptorIter = currentDescriptors.begin();
+    for (int i=0; i<currentDescriptors.size(); ++i)
+    {
+        juce::String descriptor = *descriptorIter;
+        if (i == 0)
+            descriptorString << descriptor;
+        else
+            descriptorString << ", " << descriptor;
+        ++descriptorIter;
+    }
+
+    return descriptorString;
+}
+
+const std::unordered_set<juce::String>& PresetTableModel::getDescriptors() const
+{
+    return currentDescriptors;
 }
 
 // ================================================
@@ -179,6 +190,7 @@ void Interface::resized()
     juce::Rectangle<int> searchButtonArea (370,10,70, 30);
     juce::Rectangle<int> findSimilarButtonArea (370,45,70, 30);
     juce::Rectangle<int> autoTagButtonArea (370,80,70, 30);
+    juce::Rectangle<int> confirmTagButtonArea (370,300,70, 30);
 
     const int keyboardMargin = 10;
     juce::Rectangle<int> keyboardArea (keyboardMargin,getHeight()-64-keyboardMargin,
@@ -191,6 +203,7 @@ void Interface::resized()
     searchButton.setBounds(searchButtonArea);
     findSimilarButton.setBounds(findSimilarButtonArea);
     autoTagButton.setBounds(autoTagButtonArea);
+    confirmTagButton.setBounds(confirmTagButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
     savePresetButton.setBounds(savePresetButtonArea);
     tagInputBox.setBounds(tagInputBoxArea);
@@ -221,6 +234,9 @@ void Interface::initializeComponents()
 
     autoTagButton.onClick = [this] {autoTagButtonClicked(); };
     addAndMakeVisible(autoTagButton);
+
+    confirmTagButton.onClick = [this] {confirmTagButtonClicked(); };
+    addAndMakeVisible(confirmTagButton);
 
     loadPresetButton.onClick = [this] {loadPresetButtonClicked(); };
     addAndMakeVisible(loadPresetButton);
@@ -264,29 +280,12 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
             DBG("Interface::changeListenerCallback error.");
             return;
         }
+        tagEditInputBox.setText(presetList.getDescriptorString());
     }
 
     else if (source == &oscManager.selectedPresetsReadyBroadcaster)
     {
-        //auto selectedPaths = oscManager.getSelectedPresetPaths();
-        presetList.clear();
-
-        for (const auto &path : oscManager.getSelectedPresetPaths())
-        {
-            juce::File file(path); // the path is already a absolute path
-            auto xmlPreset = juce::XmlDocument::parse(file);
-            if (!xmlPreset)
-                return;
-
-            juce::String pluginPath;
-            std::unordered_set<juce::String> descriptors;
-            juce::Array<std::pair<int, float>> parameters;
-            auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, pluginPath, descriptors);
-            if (!isSuccessful)
-                continue;
-
-            presetList.addItem(pluginPath, path, descriptors);
-        }
+        refreshPresetList();
     }
 
     else if (source == &oscManager.autoTagsReadyBroadcaster)
@@ -347,6 +346,28 @@ void Interface::loadPluginCallback(const juce::String &path)
 
     synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
                            juce::NotificationType::sendNotification);
+}
+
+void Interface::refreshPresetList()
+{
+    presetList.clear();
+
+    for (const auto &path : oscManager.getSelectedPresetPaths())
+    {
+        juce::File file(path); // the path is already a absolute path
+        auto xmlPreset = juce::XmlDocument::parse(file);
+        if (!xmlPreset)
+            return;
+
+        juce::String pluginPath;
+        std::unordered_set<juce::String> descriptors;
+        juce::Array<std::pair<int, float>> parameters;
+        auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, pluginPath, descriptors);
+        if (!isSuccessful)
+            continue;
+
+        presetList.addItem(pluginPath, path, descriptors);
+    }
 }
 
 // =================================================
@@ -462,11 +483,11 @@ void Interface::savePresetButtonClicked()
     }
 }
 
-void Interface::changeDescriptors()
+void Interface::confirmTagButtonClicked()
 {
-    // 1. get the preset that is being selected
+    auto selectedPresetPath = presetList.getPresetPath();
+    auto descriptors= PresetManager::stringToDescriptors(tagEditInputBox.getText());
+    processorManager.changeDescriptors(selectedPresetPath, descriptors);
 
-    // 2. get the timbre descriptors from the input box
-
-    // 3. call the corresponding method in processorManager
+    refreshPresetList();
 }

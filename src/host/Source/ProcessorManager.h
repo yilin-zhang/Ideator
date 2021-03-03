@@ -54,6 +54,8 @@ public:
     void setOSCManager(OSCManager* oscManager) override;
     void findSimilar() override;
     bool autoTag() override;
+    bool changeDescriptors(const juce::String &presetPath,
+                           const std::unordered_set<juce::String> &newDescriptors) override;
 
 private:
 #ifdef IDEATOR_APP

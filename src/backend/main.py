@@ -100,6 +100,7 @@ class PresetRetriever:
         descriptors = list(map(lambda x: x.capitalize(), descriptors))  # make sure the words are capitalized
         idx = self._preset_paths.index(path)
         self._preset_descriptors[idx] = descriptors
+        print(f'new descriptors: {descriptors}')
         self.save_cache('./cache/preset_lib.pkl')
 
     def load_cache(self, cache_path: str) -> None:
@@ -226,10 +227,9 @@ def change_descriptors_callback(address: str,
     preset_path = str(osc_args[0])
     tag_string = str(osc_args[1])
     print(f'preset_path: {preset_path}')
-    print(f'tag_string: {tag_string}')
     # split the keyword string
     keyword_list = re.split('[^a-zA-Z]+', tag_string)
-    preset_retriever.change_descriptors(preset_path, tag_string)
+    preset_retriever.change_descriptors(preset_path, keyword_list)
 
 
 if __name__ == "__main__":

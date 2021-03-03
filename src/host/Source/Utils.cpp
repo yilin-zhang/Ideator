@@ -88,6 +88,35 @@ bool PresetManager::parse(const juce::XmlElement &preset,
     // true means parse successfully
     return true;
 }
+
+
+juce::String PresetManager::descriptorsToString(const std::unordered_set<juce::String>& descriptors)
+{
+    // form a string of descriptors, use "," as the separator
+    juce::String descriptorString;
+    int idx = 0;
+    for (const auto& descriptor : descriptors)
+    {
+        descriptorString.append(descriptor, descriptor.length());
+        if (idx != descriptors.size() - 1)
+            descriptorString.append(",", 1);
+        ++idx;
+    }
+
+    return descriptorString;
+}
+
+std::unordered_set<juce::String> PresetManager::stringToDescriptors(const juce::String& descriptorString)
+{
+    juce::StringArray descriptorArray;
+    std::unordered_set<juce::String> descriptors;
+    descriptorArray.addTokens(descriptorString, ", &", "\"");
+    descriptorArray.removeEmptyStrings(true);
+    descriptors.clear();
+    for (auto &descriptor : descriptorArray)
+        descriptors.insert(descriptor);
+    return descriptors;
+}
 // ========================================
 // UdpManager
 // ========================================
@@ -193,7 +222,7 @@ void OSCManager::sendRequestForPresetRetrieval(const juce::String &inputString)
 void OSCManager::prepareToAnalyzeAudio(const juce::String& presetPath,
                                        const std::unordered_set<juce::String>& descriptors)
 {
-    juce::String descriptorString = formDescriptorString(descriptors);
+    juce::String descriptorString = PresetManager::descriptorsToString(descriptors);
     juce::OSCMessage msg(OSC_SEND_PATTERN + "analyze_library", 1, presetPath, descriptorString);
     oscSender.send(msg);
 }
@@ -229,25 +258,9 @@ const juce::StringArray& OSCManager::getAutoTags()
 void OSCManager::changeDescriptors(const juce::String& presetPath,
                                    const std::unordered_set<juce::String>& descriptors)
 {
-    juce::String descriptorString = formDescriptorString(descriptors);
+    juce::String descriptorString = PresetManager::descriptorsToString(descriptors);
     juce::OSCMessage msg(OSC_SEND_PATTERN + "change_descriptors", presetPath, descriptorString);
     oscSender.send(msg);
-}
-
-juce::String OSCManager::formDescriptorString(const std::unordered_set<juce::String> &descriptors)
-{
-    // form a string of descriptors, use "," as the separator
-    juce::String descriptorString;
-    int idx = 0;
-    for (const auto& descriptor : descriptors)
-    {
-        descriptorString.append(descriptor, descriptor.length());
-        if (idx != descriptors.size() - 1)
-            descriptorString.append(",", 1);
-        ++idx;
-    }
-
-    return descriptorString;
 }
 
 void OSCManager::showConnectionErrorMessage (const juce::String& messageText)
@@ -313,14 +326,7 @@ void OSCManager::oscMessageReceived (const juce::OSCMessage& message)
         for (int i=2; i<numParamsToSet*2+2; i+=2)
             pluginManager->setPluginParameter(message[i].getInt32(), message[i + 1].getFloat32());
 
-        juce::StringArray descriptorArray;
-        std::unordered_set<juce::String> descriptors;
-        descriptorArray.addTokens(concatTimbreDescriptors, ", &", "\"");
-        descriptorArray.removeEmptyStrings(true);
-        descriptors.clear();
-        for (auto &descriptor : descriptorArray)
-            descriptors.insert(descriptor);
-
+        std::unordered_set<juce::String> descriptors = PresetManager::stringToDescriptors(concatTimbreDescriptors);
         pluginManager->setTimbreDescriptors(descriptors);
 
         // when it comes to this stage, all the states of the preset have been set,

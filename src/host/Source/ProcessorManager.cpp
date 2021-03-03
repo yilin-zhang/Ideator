@@ -146,3 +146,9 @@ bool ProcessorManager::autoTag()
 {
     return audioProcessor.autoTag();
 }
+
+bool ProcessorManager::changeDescriptors(const juce::String &presetPath,
+                                         const std::unordered_set<juce::String> &newDescriptors)
+{
+    return audioProcessor.changeDescriptors(presetPath, newDescriptors);
+}

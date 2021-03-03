@@ -334,16 +334,12 @@ bool PluginManager::changeDescriptors(const juce::String &presetPath,
                                       const std::unordered_set<juce::String> &newDescriptors)
 {
     // 1. update the preset file by changing the timbre descriptors in the file
-    // TODO: check if the presetPath is valid first. If not, don't send any message to Python
-
-    // We do not check if a plugin has been loaded here, because the function will
-    // load the plugin if it is not loaded.
     juce::File inputFile(presetPath);
+
     auto xmlPreset = juce::XmlDocument::parse(inputFile);
     if (!xmlPreset)
         return false;
 
-    // parse the preset
     juce::String newPluginPath;
     std::unordered_set<juce::String> descriptors;
     juce::Array<std::pair<int, float>> parameters;
@@ -351,9 +347,20 @@ bool PluginManager::changeDescriptors(const juce::String &presetPath,
     if (!isSuccessful)
         return false;
 
+    // TODO: I assume the user does not change the patch, so I simply use the current parameters
+    // The correct way is to also send the audio to Python and change the audio feature as well
+    auto newXmlPreset = PresetManager::generate(plugin->getParameters(), pluginPath, newDescriptors);
+
+    juce::File outputFile(presetPath);
+    if (!outputFile.create().wasOk())
+        return false;
+    newXmlPreset.writeTo(outputFile);
+
     // 2. send the OSC message to notify the Python program to update its cache
     // sent the OSC message
     oscManager->changeDescriptors(presetPath, newDescriptors);
+
+    return true;
 }
 
 void PluginManager::setTimbreDescriptors(const std::unordered_set<juce::String> &timbreDescriptors)
