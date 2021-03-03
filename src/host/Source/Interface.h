@@ -81,7 +81,7 @@ private:
     juce::TextButton loadPresetButton { "Load Preset" };
     void loadPresetButtonClicked();
     // save the preset
-    juce::TextButton savePresetButton { "Save Preset" };
+    juce::TextButton savePresetButton { "Save Preset As..." };
     void savePresetButtonClicked();
     // set preset library path
     juce::TextButton setLibraryButton { "Set Library" };
@@ -103,8 +103,6 @@ private:
     juce::Label synthNameLabel;
     // status label
     juce::Label statusLabel;
-    // timbre descriptors
-    juce::Label timbreLabel;
     // preset list
     PresetTableModel presetList;
 

@@ -164,37 +164,63 @@ void Interface::paint (juce::Graphics& g)
 void Interface::resized()
 {
     // TODO: clean up the mess here
+    const int margin = 10;
+    const int buttonDistance = 35;
+    const int keyboardHeight = 64;
+    const int inputBoxHeight = 30;
+
     juce::Rectangle<int> buttonSize (0, 0, 110, 30);
-    juce::Rectangle<int> loadPluginButtonArea (10,10,
+    juce::Rectangle<int> smallButtonSize (0, 0, 80, 30);
+
+    // left column
+    juce::Rectangle<int> loadPluginButtonArea (margin, margin,
                                                buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> openPluginEditorButtonArea (10, 45,
+    juce::Rectangle<int> openPluginEditorButtonArea (margin, margin + buttonDistance,
                                                      buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> setLibraryButtonArea (10, 80,
+    juce::Rectangle<int> setLibraryButtonArea (margin, margin + buttonDistance*2,
                                                buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> analyzeLibraryButtonArea (10, 115,
+    juce::Rectangle<int> analyzeLibraryButtonArea (margin, margin + buttonDistance*3,
                                                    buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> loadPresetButtonArea (10, 265,
-                                               buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> savePresetButtonArea (10, 300,
-                                               buttonSize.getWidth(), buttonSize.getHeight());
-
-    juce::Rectangle<int> synthNameLabelArea (10, 150,
+    juce::Rectangle<int> synthNameLabelArea (margin, margin + buttonDistance * 4,
                                              buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> timbreLabelArea (10, 185,
+    juce::Rectangle<int> statusLabelArea (margin, margin + buttonDistance * 5,
                                           buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> statusLabelArea (10, 220,
-                                          buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> tagInputBoxArea (160, 10, 200, 30);
-    juce::Rectangle<int> presetListArea (160,45,200, 250);
-    juce::Rectangle<int> tagEditInputBoxArea (160, 300, 200, 30);
-    juce::Rectangle<int> searchButtonArea (370,10,70, 30);
-    juce::Rectangle<int> findSimilarButtonArea (370,45,70, 30);
-    juce::Rectangle<int> autoTagButtonArea (370,80,70, 30);
-    juce::Rectangle<int> confirmTagButtonArea (370,300,70, 30);
+    juce::Rectangle<int> loadPresetButtonArea (margin,
+                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
+    juce::Rectangle<int> savePresetButtonArea (margin, getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                               buttonSize.getWidth(), buttonSize.getHeight());
 
-    const int keyboardMargin = 10;
-    juce::Rectangle<int> keyboardArea (keyboardMargin,getHeight()-64-keyboardMargin,
-                                       getWidth() - 2 * keyboardMargin, 64);
+    // middle column
+    juce::Rectangle<int> tagInputBoxArea (margin * 2 + buttonSize.getWidth(), margin,
+                                          getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
+                                          inputBoxHeight);
+    juce::Rectangle<int> presetListArea (margin * 2 + buttonSize.getWidth(),
+                                         margin + buttonDistance,
+                                         getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
+                                         getHeight() - margin * 5 - inputBoxHeight * 2 - keyboardHeight);
+    juce::Rectangle<int> tagEditInputBoxArea (margin * 2 + buttonSize.getWidth(),
+                                              getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                              getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
+                                              inputBoxHeight);
+
+    // right column
+    juce::Rectangle<int> searchButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
+                                           margin, smallButtonSize.getWidth(), smallButtonSize.getHeight());
+    juce::Rectangle<int> findSimilarButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
+                                                margin + buttonDistance,
+                                                smallButtonSize.getWidth(),
+                                                smallButtonSize.getHeight());
+    juce::Rectangle<int> autoTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
+                                            margin + buttonDistance * 2,
+                                            smallButtonSize.getWidth(), smallButtonSize.getHeight());
+    juce::Rectangle<int> confirmTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
+                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                               smallButtonSize.getWidth(), smallButtonSize.getHeight());
+
+    // keyboard
+    juce::Rectangle<int> keyboardArea (margin, getHeight() - keyboardHeight - margin,
+                                       getWidth() - 2 * margin, keyboardHeight);
 
     loadPluginButton.setBounds(loadPluginButtonArea);
     openPluginEditorButton.setBounds(openPluginEditorButtonArea);
@@ -208,7 +234,6 @@ void Interface::resized()
     savePresetButton.setBounds(savePresetButtonArea);
     tagInputBox.setBounds(tagInputBoxArea);
     synthNameLabel.setBounds(synthNameLabelArea);
-    timbreLabel.setBounds(timbreLabelArea);
     statusLabel.setBounds(statusLabelArea);
     presetList.setBounds(presetListArea);
     tagEditInputBox.setBounds(tagEditInputBoxArea);

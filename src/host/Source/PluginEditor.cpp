@@ -22,6 +22,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+    setResizable(true, true);
+    setResizeLimits(interface.getWidth(), interface.getHeight(),
+                    1920, 1080);
     setSize (interface.getWidth(), interface.getHeight());
     addAndMakeVisible(interface);
 }
