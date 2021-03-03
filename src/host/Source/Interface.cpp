@@ -107,19 +107,7 @@ const juce::Array<juce::String>& PresetTableModel::getLibraryPresetPaths() const
 
 juce::String PresetTableModel::getDescriptorString() const
 {
-    juce::String descriptorString;
-    auto descriptorIter = currentDescriptors.begin();
-    for (int i=0; i<currentDescriptors.size(); ++i)
-    {
-        juce::String descriptor = *descriptorIter;
-        if (i == 0)
-            descriptorString << descriptor;
-        else
-            descriptorString << ", " << descriptor;
-        ++descriptorIter;
-    }
-
-    return descriptorString;
+    return PresetManager::descriptorsToString(currentDescriptors);
 }
 
 const std::unordered_set<juce::String>& PresetTableModel::getDescriptors() const

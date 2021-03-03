@@ -155,7 +155,7 @@ def analyze_library_callback(address: str,
     if value == 1:
         buffer = udp_buffer_receiver.receive()
 
-        descriptor_list = tuple(descriptors.split(','))
+        descriptor_list = re.split('[^a-zA-Z]+', descriptors)
         library_receiver.add_library_info(preset_path, descriptor_list, buffer)
         client.send_message("/Ideator/cpp/analyze_library", 1)
 

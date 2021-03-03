@@ -99,7 +99,7 @@ juce::String PresetManager::descriptorsToString(const std::unordered_set<juce::S
     {
         descriptorString.append(descriptor, descriptor.length());
         if (idx != descriptors.size() - 1)
-            descriptorString.append(",", 1);
+            descriptorString.append(", ", 2);
         ++idx;
     }
 
