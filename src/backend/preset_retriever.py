@@ -49,16 +49,22 @@ class PresetRetriever:
         input_vector_list = [self._glove[keyword.lower()] for keyword in keyword_list]
 
         # Match each input keyword to every descriptor in a preset and find the max similarity
-        # value (measured by cosine), and take the sum of the max similarities.
+        # value, and take the sum of the max similarities.
         weights = []
         for idx, descriptor_list in enumerate(self._preset_descriptors):
             weight = 0
             for input_vector in input_vector_list:
-                max_cos = max([self._cosine_similarity(input_vector, self._glove[descriptor.lower()])
+                max_sim = max([self._dist_similarity(input_vector, self._glove[descriptor.lower()])
                                for descriptor in descriptor_list])
-                weight += max_cos
+                weight += max_sim
             weights.append(weight)
         weights = np.array(weights)
+
+        # If the word is not presented is the database, usually the difference between the max value and the min value
+        # is small (less than 1), which is not good for selecting the ones that have higher weights.
+        # So the values are non-linearly scaled in order to have a bigger difference after the normalization
+        if max(weights) - min(weights) < 1:
+            weights = pow(weights, 5)
 
         # randomly pick 5 presets according to the weights
         weights = (weights - weights.min()) / (weights - weights.min()).sum()  # normalize it to make it sum to 1
@@ -134,3 +140,10 @@ class PresetRetriever:
     def _cosine_similarity(a: np.array, b: np.array) -> float:
         cos_sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
         return cos_sim
+
+    @staticmethod
+    def _dist_similarity(a: np.array, b: np.array) -> float:
+        dist = np.linalg.norm(a - b)
+        if dist < pow(10, -5):  # make sure the value is above 0
+            dist = pow(10, -5)
+        return 1 / dist
