@@ -91,8 +91,17 @@ class PresetRetriever:
         selected_descriptors = [descriptor for subl in selected_descriptors for descriptor in subl] # flatten
         # find the most frequent descriptors
         freq_dict = dict(Counter(selected_descriptors))
+        # filter out the descriptors that get fewer than 5 votes
+        filtered_dict = {}
+        for key in freq_dict:
+            if freq_dict[key] >= k/2:
+                filtered_dict[key] = freq_dict[key]
+        # if the filtered dict is not empty, return the descriptors in it
+        if filtered_dict:
+            return list(filtered_dict.keys())
+        # otherwise, take 3 most voted descriptors instead
         sorted_descriptors = sorted(freq_dict, key=freq_dict.get, reverse=True)
-        # take 3 descriptors, otherwise take all
+        # take 3 descriptors if possible, otherwise take all
         if len(sorted_descriptors) >= 3:
             return sorted_descriptors[:3]
         else:
