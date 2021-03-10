@@ -48,6 +48,9 @@ class PresetRetriever:
     def retrieve_presets_by_keywords(self, keyword_list: List[str]) -> List[str]:
         input_vector_list = [self._glove[keyword.lower()] for keyword in keyword_list]
 
+        # for kw in keyword_list:
+        #     self._print_similarity_to_descriptors(kw)
+
         # Match each input keyword to every descriptor in a preset and find the max similarity
         # value, and take the sum of the max similarities.
         weights = []
@@ -135,6 +138,9 @@ class PresetRetriever:
         words = pickle.load(open(f'{glove_path}/6B.50_words.pkl', 'rb'))
         word2idx = pickle.load(open(f'{glove_path}/6B.50_idx.pkl', 'rb'))
         self._glove = defaultdict(lambda: np.ones(50) * np.sqrt(1/50), {w: word_vectors[word2idx[w]] for w in words})
+        # This is a hack. There is no "inharmonic" in the GloVe dataset, so I simply copy the word vector of
+        # "inharmonicity" to "inharmonic" to make it work.
+        self._glove['inharmonic'] = self._glove['inharmonicity']
 
     @staticmethod
     def _cosine_similarity(a: np.array, b: np.array) -> float:
@@ -147,3 +153,23 @@ class PresetRetriever:
         if dist < pow(10, -5):  # make sure the value is above 0
             dist = pow(10, -5)
         return 1 / dist
+
+    def _print_similarity_to_descriptors(self, keyword: str) -> None:
+        """ This method is only for testing. """
+        descriptor_list = ("Bright", "Dark",
+                           "Dynamic", "Static",
+                           "Constant", "Moving",
+                           "Soft", "Aggressive",
+                           "Harmonic", "Inharmonic",
+                           "Phat", "Thin",
+                           "Clean", "Dirty",
+                           "Wide", "Narrow",
+                           "Modern", "Vintage",
+                           "Acoustic", "Electric",
+                           "Natural", "Synthetic")
+        input_vector = self._glove[keyword.lower()]
+        print(f'input_vector: {input_vector}')
+        descriptor_vectors = list(map(lambda x: self._glove[x.lower()], descriptor_list))
+
+        for descriptor, descriptor_vector in zip(descriptor_list, descriptor_vectors):
+            print(f'similarity between {keyword} and {descriptor}: {self._dist_similarity(input_vector, descriptor_vector)}')
