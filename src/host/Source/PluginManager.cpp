@@ -44,7 +44,10 @@ bool PluginManager::loadPlugin(const juce::String& path)
 
     // release resources before loading a new plugin
     if (plugin)
+    {
         plugin->releaseResources();
+        plugin.reset();
+    }
 
     pluginFormatManager.addDefaultFormats();
 
