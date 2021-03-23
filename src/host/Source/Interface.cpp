@@ -19,7 +19,7 @@
 PresetTableModel::PresetTableModel()
 {
     presetTable.setModel(this);
-    presetTable.getHeader().addColumn("Path", 1, 80);
+    presetTable.getHeader().addColumn("Preset", 1, 80);
     presetTable.getHeader().addColumn("Descriptors", 2, 80);
     presetTable.setColour(juce::ListBox::backgroundColourId, juce::Colour::greyLevel(0.2f));
     presetTable.setRowHeight(30);
@@ -50,7 +50,10 @@ void PresetTableModel::paintCell (juce::Graphics &g, int rowNumber, int columnId
     g.setFont(18);
     g.setColour(juce::Colours::whitesmoke);
     if (columnId == 1)
-        g.drawFittedText(presetPaths[rowNumber], {6, 0, width - 12, height}, juce::Justification::centredLeft, 1, 1.f);
+    {
+        auto presetName = getPresetNameFromPath(presetPaths[rowNumber]);
+        g.drawFittedText(presetName, {6, 0, width - 12, height}, juce::Justification::centredLeft, 1, 1.f);
+    }
     else
     {
         auto descriptorString = PresetManager::descriptorsToString(descriptors[rowNumber]);
@@ -113,6 +116,13 @@ juce::String PresetTableModel::getDescriptorString() const
 const std::unordered_set<juce::String>& PresetTableModel::getDescriptors() const
 {
     return currentDescriptors;
+}
+
+juce::String PresetTableModel::getPresetNameFromPath(const juce::String& path)
+{
+    juce::StringArray tokens;
+    tokens.addTokens (path, "/\\", "\"");
+    return tokens[tokens.size()-1].trimCharactersAtEnd(".xml");
 }
 
 // ================================================
@@ -267,7 +277,7 @@ void Interface::initializeComponents()
     synthNameLabel.addListener(this);
     addAndMakeVisible(synthNameLabel);
 
-    synthNameLabel.addListener(this);
+    statusLabel.addListener(this);
     addAndMakeVisible(statusLabel);
 
     midiKeyboard.setName ("MIDI Keyboard");
@@ -282,18 +292,7 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 
     else if (source == &presetList)
     {
-        // it's possible that the presetList returns an empty plugin path when
-        // the user imports a new library after he/she loads a plugin.
-        // so it's necessary to reject the empty plugin path.
-        if (presetList.getPluginPath() != processorManager.getPluginPath() &&
-            !presetList.getPluginPath().isEmpty())
-            loadPluginCallback(presetList.getPluginPath());
-        if (!processorManager.loadPreset(presetList.getPresetPath()))
-        {
-            DBG("Interface::changeListenerCallback error.");
-            return;
-        }
-        tagEditInputBox.setText(presetList.getDescriptorString());
+        loadPresetCallback(presetList.getPresetPath());
     }
 
     else if (source == &oscManager.selectedPresetsReadyBroadcaster)
@@ -357,6 +356,47 @@ void Interface::loadPluginCallback(const juce::String &path)
 
     processorManager.loadPlugin(path);
 
+    synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
+                           juce::NotificationType::sendNotification);
+}
+
+void Interface::loadPresetCallback(const juce::String &path)
+{
+    juce::String descriptorString;
+
+    // Load the plugin if the plugin is different from the current one
+    // it's possible that the presetList returns an empty plugin path when
+    // the user imports a new library after he/she loads a plugin.
+    // so it's necessary to reject the empty plugin path.
+    if (path != processorManager.getPluginPath() && !path.isEmpty())
+    {
+        // parse the preset
+        juce::File file(path);
+        auto xmlPreset = juce::XmlDocument::parse(file);
+        if (!xmlPreset)
+            return;
+        juce::String pluginPath;
+        std::unordered_set<juce::String> descriptors;
+        juce::Array<std::pair<int, float>> parameters;
+        auto isSuccessful = PresetManager::parse(*xmlPreset, parameters, pluginPath, descriptors);
+        if (!isSuccessful)
+            return;
+        descriptorString = PresetManager::descriptorsToString(descriptors);
+
+        // load the plugin
+        loadPluginCallback(pluginPath);
+    }
+
+    // load the preset
+    if (!processorManager.loadPreset(path))
+    {
+        DBG("Interface::loadPresetCallback error.");
+        return;
+    }
+
+    // set the text
+    tagEditInputBox.setText(descriptorString);
+    statusLabel.setText("Preset: " + path, juce::NotificationType::sendNotification);
     synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
                            juce::NotificationType::sendNotification);
 }
@@ -440,17 +480,7 @@ void Interface::loadPresetButtonClicked()
     juce::FileChooser fileChooser("Select the path", {});
     if (fileChooser.browseForFileToOpen())
     {
-        if (!processorManager.loadPreset(fileChooser.getResult().getFullPathName()))
-        {
-            DBG("Interface::loadPresetButtonClicked error.");
-            return;
-        }
-
-        // The plugin path is written inside the preset and the program will
-        // load the plugin according to it. Therefore, we should update the plugin name here.
-        // It is the same as we do in loadPluginButtonClicked.
-        synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
-                               juce::NotificationType::sendNotification);
+        loadPresetCallback(fileChooser.getResult().getFullPathName());
     }
 }
 

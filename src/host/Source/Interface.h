@@ -32,6 +32,7 @@ public:
     juce::String getDescriptorString() const;
     const std::unordered_set<juce::String>& getDescriptors() const;
 private:
+    static juce::String getPresetNameFromPath(const juce::String& path);
     juce::TableListBox presetTable;
     juce::Array<juce::String> pluginPaths;
     juce::Array<juce::String> presetPaths;
@@ -65,6 +66,7 @@ private:
 
     // custom callbacks
     void loadPluginCallback(const juce::String &path);
+    void loadPresetCallback(const juce::String &path);
     void refreshPresetList();
 
     /// functionalities
