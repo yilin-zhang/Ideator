@@ -42,6 +42,9 @@ bool PluginManager::loadPlugin(const juce::String& path)
     juce::KnownPluginList pluginList;
     juce::AudioPluginFormatManager pluginFormatManager;
 
+    if (path == pluginPath)
+        return true;
+
     // release resources before loading a new plugin
     if (plugin)
     {

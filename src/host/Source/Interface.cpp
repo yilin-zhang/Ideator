@@ -351,13 +351,15 @@ void Interface::loadPluginCallback(const juce::String &path)
     // If there is a opened plugin window, delete it.
     // Must delete the window before loading a new plugin
     // because the plugin editor is bounded to its plugin processor
-    if (pluginWindow)
-        pluginWindow.deleteAndZero();
+    if (path != currentPluginPath)
+        if (pluginWindow)
+            pluginWindow.deleteAndZero();
 
     processorManager.loadPlugin(path);
 
     synthNameLabel.setText("Synth: " + processorManager.getPluginDescription().name,
                            juce::NotificationType::sendNotification);
+    currentPluginPath = path;
 }
 
 void Interface::loadPresetCallback(const juce::String &path)

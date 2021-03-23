@@ -58,6 +58,7 @@ private:
     ProcessorManager& processorManager;
     OSCManager& oscManager;
     juce::Component::SafePointer<PluginWindow> pluginWindow;
+    juce::String currentPluginPath;
 
     void initializeComponents();
 
