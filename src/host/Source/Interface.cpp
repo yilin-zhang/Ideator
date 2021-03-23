@@ -181,8 +181,6 @@ void Interface::resized()
                                                    buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> synthNameLabelArea (margin, margin + buttonDistance * 4,
                                              buttonSize.getWidth(), buttonSize.getHeight());
-    juce::Rectangle<int> statusLabelArea (margin, margin + buttonDistance * 5,
-                                          buttonSize.getWidth(), buttonSize.getHeight());
     juce::Rectangle<int> loadPresetButtonArea (margin,
                                                getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
                                                buttonSize.getWidth(), buttonSize.getHeight());
@@ -196,11 +194,15 @@ void Interface::resized()
     juce::Rectangle<int> presetListArea (margin * 2 + buttonSize.getWidth(),
                                          margin + buttonDistance,
                                          getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
-                                         getHeight() - margin * 5 - inputBoxHeight * 2 - keyboardHeight);
+                                         getHeight() - margin * 5 - inputBoxHeight * 2 - buttonDistance - keyboardHeight);
     juce::Rectangle<int> tagEditInputBoxArea (margin * 2 + buttonSize.getWidth(),
-                                              getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                              getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
                                               getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
                                               inputBoxHeight);
+    juce::Rectangle<int> statusLabelArea (margin * 2 + buttonSize.getWidth(),
+                                          getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                          getWidth() - buttonSize.getWidth() - smallButtonSize.getWidth() - margin * 4,
+                                          buttonSize.getHeight());
 
     // right column
     juce::Rectangle<int> searchButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
@@ -210,10 +212,10 @@ void Interface::resized()
                                                 smallButtonSize.getWidth(),
                                                 smallButtonSize.getHeight());
     juce::Rectangle<int> autoTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
-                                            margin + buttonDistance * 2,
+                                            getHeight() - keyboardHeight - margin * 2 - buttonDistance * 3,
                                             smallButtonSize.getWidth(), smallButtonSize.getHeight());
     juce::Rectangle<int> confirmTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
-                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance,
+                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
                                                smallButtonSize.getWidth(), smallButtonSize.getHeight());
 
     // keyboard
