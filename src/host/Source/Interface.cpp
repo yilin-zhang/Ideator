@@ -19,8 +19,8 @@
 PresetTableModel::PresetTableModel()
 {
     presetTable.setModel(this);
-    presetTable.getHeader().addColumn("Preset", 1, 80);
-    presetTable.getHeader().addColumn("Descriptors", 2, 80);
+    presetTable.getHeader().addColumn("Preset", 1, 150);
+    presetTable.getHeader().addColumn("Descriptors", 2, 500);
     presetTable.setColour(juce::ListBox::backgroundColourId, juce::Colour::greyLevel(0.2f));
     presetTable.setRowHeight(30);
     addAndMakeVisible(presetTable);
@@ -136,7 +136,7 @@ Interface::Interface(ProcessorManager& pm, OSCManager& oscManager) :
 {
     // Make sure you set the size of the component after
     // you add any child components.
-    setSize (450, 450);
+    setSize (900, 450);
 
     initializeComponents();
 
