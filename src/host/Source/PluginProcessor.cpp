@@ -153,7 +153,11 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (plugin)
     {
-        plugin->processBlock(buffer, midiMessages);
+        // only process the internal midi buffer when the incoming midi buffer is empty
+        if (midiMessages.isEmpty())
+            plugin->processBlock(buffer, midiBuffer);
+        else
+            plugin->processBlock(buffer, midiMessages);
         //auto rp = bufferToFill.buffer->getReadPointer(1);
         //std::cout << rp[0] << std::endl;
     }
