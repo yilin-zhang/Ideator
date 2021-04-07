@@ -67,7 +67,15 @@ void PresetTableModel::cellClicked (int rowNumber, int columnId, const juce::Mou
     currentPresetPath = presetPaths[rowNumber];
     currentPluginPath = pluginPaths[rowNumber];
     currentDescriptors = descriptors[rowNumber];
-    sendChangeMessage();
+    cellClickedBroadcaster.sendChangeMessage();
+}
+
+void PresetTableModel::cellDoubleClicked (int rowNumber, int columnId, const juce::MouseEvent &)
+{
+    currentPresetPath = presetPaths[rowNumber];
+    currentPluginPath = pluginPaths[rowNumber];
+    currentDescriptors = descriptors[rowNumber];
+    cellDoubleClickedBroadcaster.sendChangeMessage();
 }
 
 void PresetTableModel::resized()
@@ -142,7 +150,8 @@ Interface::Interface(ProcessorManager& pm, OSCManager& oscManager) :
 
     oscManager.selectedPresetsReadyBroadcaster.addChangeListener(this);
     oscManager.autoTagsReadyBroadcaster.addChangeListener(this);
-    presetList.addChangeListener(this);
+    presetList.cellClickedBroadcaster.addChangeListener(this);
+    presetList.cellDoubleClickedBroadcaster.addChangeListener(this);
 }
 
 Interface::~Interface()
@@ -292,9 +301,15 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
     if (pluginWindow && (source == &pluginWindow->windowClosedBroadcaster))
         pluginWindow.deleteAndZero();
 
-    else if (source == &presetList)
+    else if (source == &presetList.cellClickedBroadcaster)
     {
         loadPresetCallback(presetList.getPresetPath());
+    }
+
+    else if (source == &presetList.cellDoubleClickedBroadcaster)
+    {
+        loadPresetCallback(presetList.getPresetPath());
+        openPluginEditorCallback();
     }
 
     else if (source == &oscManager.selectedPresetsReadyBroadcaster)
@@ -405,6 +420,37 @@ void Interface::loadPresetCallback(const juce::String &path)
                            juce::NotificationType::sendNotification);
 }
 
+void Interface::openPluginEditorCallback()
+{
+    if (processorManager.checkPluginLoaded())
+    {
+        // Don't do anything if the window has already opened
+        // Do the checking before getting the plugin editor, otherwise if the window has opened,
+        // the plugin window will not change after loading a new preset.
+        // Maybe it's because a new editor is created and activated but not registered in the plugin window.
+        if (pluginWindow)
+            return;
+
+        auto editor = processorManager.getPluginEditor();
+
+        if (!editor)
+        {
+            DBG("The plugin does not have an editor");
+            return;
+        }
+
+        // create a new plugin window and initialize it
+        pluginWindow = new PluginWindow("Plugin", juce::Colours::black, 7, true);
+        pluginWindow->windowClosedBroadcaster.addChangeListener(this);
+        pluginWindow->setEditor(editor);
+        pluginWindow->setVisible(true);
+    }
+    else
+    {
+        DBG("No plugin loaded!");
+    }
+}
+
 void Interface::refreshPresetList()
 {
     presetList.clear();
@@ -433,30 +479,7 @@ void Interface::refreshPresetList()
 
 void Interface::openPluginEditorButtonClicked()
 {
-    if (processorManager.checkPluginLoaded())
-    {
-        auto editor = processorManager.getPluginEditor();
-
-        if (!editor)
-        {
-            DBG("The plugin does not have an editor");
-            return;
-        }
-
-        // don't do anything if the window has already opened
-        if (pluginWindow)
-            return;
-
-        // create a new plugin window and initialize it
-        pluginWindow = new PluginWindow("Plugin", juce::Colours::black, 7, true);
-        pluginWindow->windowClosedBroadcaster.addChangeListener(this);
-        pluginWindow->setEditor(editor);
-        pluginWindow->setVisible(true);
-    }
-    else
-    {
-        DBG("No plugin loaded!");
-    }
+    openPluginEditorCallback();
 }
 
 void Interface::analyzeLibraryButtonClicked()

@@ -14,8 +14,7 @@
 #include "PluginWindow.h"
 
 class PresetTableModel : public juce::Component,
-                         public juce::TableListBoxModel,
-                         public juce::ChangeBroadcaster
+                         public juce::TableListBoxModel
 {
 public:
     explicit PresetTableModel();
@@ -23,6 +22,7 @@ public:
     void paintRowBackground (juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected) override;
     void paintCell (juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
     void cellClicked (int rowNumber, int columnId, const juce::MouseEvent &) override;
+    void cellDoubleClicked (int rowNumber, int columnId, const juce::MouseEvent &) override;
     void resized() override;
     void addItem(const juce::String &pluginPath, const juce::String &presetPath, const std::unordered_set<juce::String> &descriptors);
     void clear();
@@ -31,6 +31,9 @@ public:
     const juce::Array<juce::String>& getLibraryPresetPaths() const;
     juce::String getDescriptorString() const;
     const std::unordered_set<juce::String>& getDescriptors() const;
+
+    juce::ChangeBroadcaster cellClickedBroadcaster;
+    juce::ChangeBroadcaster cellDoubleClickedBroadcaster;
 private:
     static juce::String getPresetNameFromPath(const juce::String& path);
     juce::TableListBox presetTable;
@@ -68,6 +71,7 @@ private:
     // custom callbacks
     void loadPluginCallback(const juce::String &path);
     void loadPresetCallback(const juce::String &path);
+    void openPluginEditorCallback();
     void refreshPresetList();
 
     /// functionalities

@@ -66,7 +66,7 @@ protected:
 private:
     void resetWhenParameterChanged();
     void audioProcessorParameterChanged (juce::AudioProcessor *processor, int parameterIndex, float newValue) override;
-    void audioProcessorChanged (juce::AudioProcessor *processor) override;
+    void audioProcessorChanged (juce::AudioProcessor *processor, const ChangeDetails& details) override;
 
     void changeListenerCallback (juce::ChangeBroadcaster *source) override;
     bool analyzeNextPresetInLibrary();

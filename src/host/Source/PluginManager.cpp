@@ -302,7 +302,7 @@ bool PluginManager::loadPreset(const juce::String &presetPath)
 
     // the plugin will not notify the host when a preset is set in this way, so we should
     // call the callback manually
-    audioProcessorChanged(plugin.get());
+    audioProcessorChanged(plugin.get(), {false, true, false});
 
     // set meta data
     this->presetPath = presetPath;
@@ -457,7 +457,7 @@ void PluginManager::audioProcessorParameterChanged (juce::AudioProcessor *proces
     DBG("A parameter has been changed.");
 }
 
-void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor)
+void PluginManager::audioProcessorChanged (juce::AudioProcessor *processor, const ChangeDetails& details)
 {
     // This function will be called when the Diva patch has been set to a new preset.
     resetWhenParameterChanged();
