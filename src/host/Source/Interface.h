@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 #include "ProcessorManager.h"
 #include "PluginWindow.h"
+#include "Utils.h"
 
 class PresetTableModel : public juce::Component,
                          public juce::TableListBoxModel
@@ -62,6 +63,7 @@ private:
     OSCManager& oscManager;
     juce::Component::SafePointer<PluginWindow> pluginWindow;
     juce::String currentPluginPath;
+    UndoStack<juce::StringArray> undoStack;
 
     void initializeComponents();
 
@@ -72,7 +74,7 @@ private:
     void loadPluginCallback(const juce::String &path);
     void loadPresetCallback(const juce::String &path);
     void openPluginEditorCallback();
-    void refreshPresetList();
+    void setPresetList(const juce::StringArray& presetPaths);
 
     /// functionalities
     // load plugin
@@ -102,6 +104,10 @@ private:
     // buttons on the right side
     juce::TextButton findSimilarButton {"Similar"};
     void findSimilarButtonClicked();
+    juce::TextButton presetListUndoButton {"<"};
+    void presetListUndoButtonClicked();
+    juce::TextButton presetListRedoButton {">"};
+    void presetListRedoButtonClicked();
     juce::TextButton autoTagButton {"Auto Tag"};
     void autoTagButtonClicked();
     juce::TextButton confirmTagButton {"Confirm"};

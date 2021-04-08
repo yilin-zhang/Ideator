@@ -10,7 +10,6 @@
 
 #include "Interface.h"
 #include "Config.h"
-#include "Utils.h"
 
 // ================================================
 // PresetTableModel
@@ -220,11 +219,17 @@ void Interface::resized()
                                                 margin + buttonDistance,
                                                 smallButtonSize.getWidth(),
                                                 smallButtonSize.getHeight());
+    juce::Rectangle<int> presetListUndoButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
+                                                   getHeight() - keyboardHeight - margin * 2 - buttonDistance * 3,
+                                                   smallButtonSize.getWidth()/2, smallButtonSize.getHeight());
+    juce::Rectangle<int> presetListRedoButtonArea (getWidth() - margin - smallButtonSize.getWidth()/2,
+                                                   getHeight() - keyboardHeight - margin * 2 - buttonDistance * 3,
+                                                   smallButtonSize.getWidth()/2, smallButtonSize.getHeight());
     juce::Rectangle<int> autoTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
-                                            getHeight() - keyboardHeight - margin * 2 - buttonDistance * 3,
+                                            getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
                                             smallButtonSize.getWidth(), smallButtonSize.getHeight());
     juce::Rectangle<int> confirmTagButtonArea (getWidth() - margin - smallButtonSize.getWidth(),
-                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance * 2,
+                                               getHeight() - keyboardHeight - margin * 2 - buttonDistance,
                                                smallButtonSize.getWidth(), smallButtonSize.getHeight());
 
     // keyboard
@@ -237,6 +242,8 @@ void Interface::resized()
     analyzeLibraryButton.setBounds(analyzeLibraryButtonArea);
     searchButton.setBounds(searchButtonArea);
     findSimilarButton.setBounds(findSimilarButtonArea);
+    presetListUndoButton.setBounds(presetListUndoButtonArea);
+    presetListRedoButton.setBounds(presetListRedoButtonArea);
     autoTagButton.setBounds(autoTagButtonArea);
     confirmTagButton.setBounds(confirmTagButtonArea);
     loadPresetButton.setBounds(loadPresetButtonArea);
@@ -265,6 +272,14 @@ void Interface::initializeComponents()
 
     findSimilarButton.onClick = [this] {findSimilarButtonClicked(); };
     addAndMakeVisible(findSimilarButton);
+
+    presetListUndoButton.onClick = [this] {presetListUndoButtonClicked(); };
+    addAndMakeVisible(presetListUndoButton);
+    presetListUndoButton.setEnabled(undoStack.isUndoAvailable());
+
+    presetListRedoButton.onClick = [this] {presetListRedoButtonClicked(); };
+    addAndMakeVisible(presetListRedoButton);
+    presetListRedoButton.setEnabled(undoStack.isRedoAvailable());
 
     autoTagButton.onClick = [this] {autoTagButtonClicked(); };
     addAndMakeVisible(autoTagButton);
@@ -314,7 +329,14 @@ void Interface::changeListenerCallback(juce::ChangeBroadcaster *source)
 
     else if (source == &oscManager.selectedPresetsReadyBroadcaster)
     {
-        refreshPresetList();
+        auto presetPaths = oscManager.getSelectedPresetPaths();
+        if (!presetPaths.isEmpty())
+        {
+            setPresetList(presetPaths);
+            undoStack.push(presetPaths);
+            presetListUndoButton.setEnabled(undoStack.isUndoAvailable());
+            presetListRedoButton.setEnabled(undoStack.isRedoAvailable());
+        }
     }
 
     else if (source == &oscManager.autoTagsReadyBroadcaster)
@@ -451,11 +473,11 @@ void Interface::openPluginEditorCallback()
     }
 }
 
-void Interface::refreshPresetList()
+void Interface::setPresetList(const juce::StringArray &presetPaths)
 {
     presetList.clear();
 
-    for (const auto &path : oscManager.getSelectedPresetPaths())
+    for (const auto &path : presetPaths)
     {
         juce::File file(path); // the path is already a absolute path
         auto xmlPreset = juce::XmlDocument::parse(file);
@@ -559,5 +581,29 @@ void Interface::confirmTagButtonClicked()
     auto descriptors= PresetManager::stringToDescriptors(tagEditInputBox.getText());
     processorManager.changeDescriptors(selectedPresetPath, descriptors);
 
-    refreshPresetList();
+    // refresh the preset list
+    auto presetPaths = presetList.getLibraryPresetPaths();
+    setPresetList(presetPaths);
+}
+
+void Interface::presetListUndoButtonClicked()
+{
+    if (!undoStack.isUndoAvailable())
+        return;
+
+    auto presetPaths = undoStack.undo();
+    setPresetList(presetPaths);
+    presetListUndoButton.setEnabled(undoStack.isUndoAvailable());
+    presetListRedoButton.setEnabled(undoStack.isRedoAvailable());
+}
+
+void Interface::presetListRedoButtonClicked()
+{
+    if (!undoStack.isRedoAvailable())
+        return;
+
+    auto presetPaths = undoStack.redo();
+    setPresetList(presetPaths);
+    presetListUndoButton.setEnabled(undoStack.isUndoAvailable());
+    presetListRedoButton.setEnabled(undoStack.isRedoAvailable());
 }

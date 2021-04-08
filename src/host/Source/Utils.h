@@ -14,6 +14,7 @@
 #include <unordered_set>
 #include <utility>
 #include "Config.h"
+#include <stack>
 
 // ========================================
 // PresetManager
@@ -111,3 +112,53 @@ private:
     static void showConnectionErrorMessage (const juce::String& messageText);
     void oscMessageReceived (const juce::OSCMessage& message) override;
 };
+
+// ========================================
+// UndoStack
+// ========================================
+template<class T>
+class UndoStack
+{
+public:
+    UndoStack() = default;
+    ~UndoStack() = default;
+    void push(const T& newElement)
+    {
+        backwardStack.push(newElement);
+
+        // clear the forward stack
+        while(!forwardStack.empty())
+            forwardStack.pop();
+    }
+
+    T undo()
+    {
+        T lastList = backwardStack.top();
+        backwardStack.pop();
+        forwardStack.push(lastList);
+        return backwardStack.top();
+    }
+
+    T redo()
+    {
+        auto previousList = forwardStack.top();
+        forwardStack.pop();
+        backwardStack.push(previousList);
+        return previousList;
+    }
+
+    bool isUndoAvailable()
+    {
+        return backwardStack.size() > 1;
+    }
+
+    bool isRedoAvailable()
+    {
+        return !forwardStack.empty();
+    }
+
+private:
+    std::stack<T> backwardStack;
+    std::stack<T> forwardStack;
+};
+
