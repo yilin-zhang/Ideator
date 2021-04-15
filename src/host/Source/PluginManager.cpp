@@ -297,6 +297,7 @@ bool PluginManager::loadPreset(const juce::String &presetPath)
         loadPlugin(newPluginPath);
 
     // set plugin parameters
+    plugin->reset();  // clear the internal buffer, otherwise there would be a tail from the previous sound
     for (const auto& parameter : parameters)
         setPluginParameter(parameter.first, parameter.second);
 
