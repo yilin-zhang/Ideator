@@ -153,13 +153,15 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (plugin)
     {
+        // not to process if audio rendering is happening in the plugin manager
+        if (plugin->isNonRealtime())
+            return;
+
         // only process the internal midi buffer when the incoming midi buffer is empty
         if (midiMessages.isEmpty())
             plugin->processBlock(buffer, midiBuffer);
         else
             plugin->processBlock(buffer, midiMessages);
-        //auto rp = bufferToFill.buffer->getReadPointer(1);
-        //std::cout << rp[0] << std::endl;
     }
     else
     {
